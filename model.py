@@ -84,17 +84,13 @@ def get_data(dir, ques):
 
 			for folder in folders:
 				for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
-					spectogram = vggish_input.wavfile_to_examples(file)
-					if len(spectogram.shape) > 2:
-						spectogram = spectogram[0,:,]
+					spectogram = vggish_input.wavfile_to_examples(file)[0,:,]
 					X.append(spectogram)
 					Y.append(lb.transform([que])[0])
 		else:
 			folder = que_dict[que]
 			for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
-				spectogram = vggish_input.wavfile_to_examples(file)
-				if len(spectogram.shape) > 2:
-					spectogram = spectogram[0,:,]
+				spectogram = vggish_input.wavfile_to_examples(file)[0,:,]
 				X.append(spectogram)
 				Y.append(lb.transform([que])[0])
 
