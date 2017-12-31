@@ -155,8 +155,8 @@ if __name__ == '__main__':
 	}
 
 	biases = {
-		'bc1': tf.Variable(tf.zeros([64])),
-		'bc2': tf.Variable(tf.zeros([64])),
+		'bc1': tf.Variable(tf.zeros([94])),
+		'bc2': tf.Variable(tf.zeros([94])),
 		'bd1': tf.Variable(tf.zeros([128])),
 		'out': tf.Variable(tf.zeros([num_classes]))
 	}
