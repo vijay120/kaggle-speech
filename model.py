@@ -29,7 +29,7 @@ def conv_net(x, weights, biases, dropout):
 	# MNIST data input is a 1-D vector of 784 features (28*28 pixels)
 	# Reshape to match picture format [Height x Width x Channel]
 	# Tensor input become 4-D: [Batch Size, Height, Width, Channel]
-	x = tf.reshape(x, shape=[-1, 129, 71, 1])
+	x = tf.reshape(x, shape=[-1, 96, 64, 1])
 
 	# Convolution Layer
 	conv1 = conv2d(x, weights['wc1'], biases['bc1'])
@@ -40,6 +40,8 @@ def conv_net(x, weights, biases, dropout):
 	conv2 = conv2d(conv1, weights['wc2'], biases['bc2'])
 	# Max Pooling (down-sampling)
 	conv2 = maxpool2d(conv2, k=2)
+
+	print(conv2.get_shape())
 	
 	# Fully connected layer
 	# Reshape conv2 output to fit fully connected layer input
@@ -87,6 +89,7 @@ def get_data(dir, ques):
 						spectogram = spectogram[0,:,]
 					X.append(spectogram)
 					Y.append(lb.transform([que])[0])
+					break
 		else:
 			folder = que_dict[que]
 			for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
@@ -94,7 +97,8 @@ def get_data(dir, ques):
 				if len(spectogram.shape) > 2:
 					spectogram = spectogram[0,:,]
 				X.append(spectogram)
-				Y.append(lb.transform([que])[0])			
+				Y.append(lb.transform([que])[0])
+				break		
 
 	examples = np.asarray(X)
 	labels = np.asarray(Y)
