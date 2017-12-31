@@ -29,7 +29,7 @@ def conv_net(x, weights, biases, dropout):
 	# MNIST data input is a 1-D vector of 784 features (28*28 pixels)
 	# Reshape to match picture format [Height x Width x Channel]
 	# Tensor input become 4-D: [Batch Size, Height, Width, Channel]
-	x = tf.reshape(x, shape=[-1, 96, 64, 1])
+	x = tf.reshape(x, shape=[-1, 64, 96, 1])
 
 	# Convolution Layer
 	conv1 = conv2d(x, weights['wc1'], biases['bc1'])
@@ -84,15 +84,17 @@ def get_data(dir, ques):
 
 			for folder in folders:
 				for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
-					spectogram = vggish_input.wavfile_to_examples(file)[0,:,]
+					spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
 					X.append(spectogram)
 					Y.append(lb.transform([que])[0])
+					break
 		else:
 			folder = que_dict[que]
 			for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
-				spectogram = vggish_input.wavfile_to_examples(file)[0,:,]
+				spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
 				X.append(spectogram)
 				Y.append(lb.transform([que])[0])
+				break
 
 	examples = np.asarray(X)
 	labels = np.asarray(Y)
@@ -144,19 +146,19 @@ if __name__ == '__main__':
 	# Store layers weight & bias
 	weights = {
 		# 5x5 conv, 1 input, 32 outputs
-		'wc1': tf.Variable(tf.random_normal([5, 5, 1, 32])),
+		'wc1': tf.Variable(tf.random_normal([20, 8, 1, 64])),
 		# 5x5 conv, 32 inputs, 64 outputs
-		'wc2': tf.Variable(tf.random_normal([5, 5, 32, 64])),
+		'wc2': tf.Variable(tf.random_normal([10, 4, 64, 64])),
 		# fully connected, 7*7*64 inputs, 1024 outputs
-		'wd1': tf.Variable(tf.random_normal([24*16*64, 1024])),
+		'wd1': tf.Variable(tf.random_normal([24*16*64, 128])),
 		# 1024 inputs, 10 outputs (class prediction)
-		'out': tf.Variable(tf.random_normal([1024, num_classes]))
+		'out': tf.Variable(tf.random_normal([128, num_classes]))
 	}
 
 	biases = {
-		'bc1': tf.Variable(tf.random_normal([32])),
+		'bc1': tf.Variable(tf.random_normal([64])),
 		'bc2': tf.Variable(tf.random_normal([64])),
-		'bd1': tf.Variable(tf.random_normal([1024])),
+		'bd1': tf.Variable(tf.random_normal([128])),
 		'out': tf.Variable(tf.random_normal([num_classes]))
 	}
 
