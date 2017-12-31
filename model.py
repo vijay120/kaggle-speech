@@ -34,7 +34,7 @@ def conv_net(x, weights, biases, dropout):
 	conv1 = conv2d(x, weights['wc1'], biases['bc1'])
 	# Max Pooling (down-sampling)
 	conv1 = tf.nn.relu(conv1)
-	conv1 = maxpool2d(conv1, 2, 2)
+	conv1 = maxpool2d(conv1, 2, 3)
 
 	# Convolution Layer
 	conv2 = conv2d(conv1, weights['wc2'], biases['bc2'])
@@ -86,12 +86,14 @@ def get_data(dir, ques):
 					spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
 					X.append(spectogram)
 					Y.append(lb.transform([que])[0])
+					break
 		else:
 			folder = que_dict[que]
 			for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
 				spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
 				X.append(spectogram)
 				Y.append(lb.transform([que])[0])
+				break
 
 	examples = np.asarray(X)
 	labels = np.asarray(Y)
@@ -128,7 +130,7 @@ if __name__ == '__main__':
 	learning_rate = 0.001
 	num_steps = 500
 	batch_size = 50
-	display_step = 1
+	display_step = 10
 	epochs = 10
 
 	# Network Parameters
@@ -143,9 +145,9 @@ if __name__ == '__main__':
 	# Store layers weight & bias
 	weights = {
 		# 5x5 conv, 1 input, 32 outputs
-		'wc1': tf.Variable(tf.truncated_normal([20, 8, 1, 64], stddev=0.01)),
+		'wc1': tf.Variable(tf.truncated_normal([21, 8, 1, 94], stddev=0.01)),
 		# 5x5 conv, 32 inputs, 64 outputs
-		'wc2': tf.Variable(tf.truncated_normal([10, 4, 64, 64], stddev=0.01)),
+		'wc2': tf.Variable(tf.truncated_normal([6, 4, 94, 94], stddev=0.01)),
 		# fully connected, 7*7*64 inputs, 1024 outputs
 		'wd1': tf.Variable(tf.truncated_normal([32*48*64, 128], stddev=0.01)),
 		# 1024 inputs, 10 outputs (class prediction)
