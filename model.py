@@ -147,7 +147,7 @@ if __name__ == '__main__':
 		# 5x5 conv, 32 inputs, 64 outputs
 		'wc2': tf.Variable(tf.random_normal([10, 4, 64, 64])),
 		# fully connected, 7*7*64 inputs, 1024 outputs
-		'wd1': tf.Variable(tf.random_normal([16*24*64, 128])),
+		'wd1': tf.Variable(tf.random_normal([64*96*64, 128])),
 		# 1024 inputs, 10 outputs (class prediction)
 		'out': tf.Variable(tf.random_normal([128, num_classes]))
 	}
