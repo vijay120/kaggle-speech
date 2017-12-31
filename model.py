@@ -19,10 +19,9 @@ def conv2d(x, W, b, strides=1):
 	return tf.nn.relu(x)
 
 
-def maxpool2d(x, k=2):
+def maxpool2d(x, p, q):
 	# MaxPool2D wrapper
-	return tf.nn.max_pool(x, ksize=[1, k, k, 1], strides=[1, k, k, 1],
-						  padding='SAME')
+	return tf.nn.max_pool(x, ksize=[1, p, q, 1], strides=[1, 1, 1, 1], padding='SAME')
 
 # Create model
 def conv_net(x, weights, biases, dropout):
@@ -34,12 +33,12 @@ def conv_net(x, weights, biases, dropout):
 	# Convolution Layer
 	conv1 = conv2d(x, weights['wc1'], biases['bc1'])
 	# Max Pooling (down-sampling)
-	conv1 = maxpool2d(conv1, k=2)
+	conv1 = maxpool2d(conv1, 3, 3)
 
 	# Convolution Layer
 	conv2 = conv2d(conv1, weights['wc2'], biases['bc2'])
 	# Max Pooling (down-sampling)
-	conv2 = maxpool2d(conv2, k=2)
+	conv2 = maxpool2d(conv2, 1, 1)
 
 	print(conv2.get_shape())
 	
@@ -185,6 +184,11 @@ if __name__ == '__main__':
 		sess.run(init)
 
 		for i in range(epochs):
+			indices = np.arange(len(examples_train))
+			np.random.shuffle(indices)
+			examples_train = examples_train[indices]
+			labels_train = labels_train[indices]
+
 			for step in range(int(len(examples_train)/batch_size)):
 				batch_x = examples_train[step*batch_size : (step+1)*batch_size]
 				batch_y = labels_train[step*batch_size : (step+1)*batch_size]
