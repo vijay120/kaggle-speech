@@ -21,7 +21,7 @@ def conv2d(x, W, b, strides=1):
 
 def maxpool2d(x, p, q):
 	# MaxPool2D wrapper
-	return tf.nn.max_pool(x, ksize=[1, p, q, 1], strides=[1, 1, 1, 1], padding='SAME')
+	return tf.nn.max_pool(x, ksize=[1, p, q, 1], strides=[1, p, q, 1], padding='SAME')
 
 # Create model
 def conv_net(x, weights, biases, dropout):
@@ -33,13 +33,13 @@ def conv_net(x, weights, biases, dropout):
 	# Convolution Layer
 	conv1 = conv2d(x, weights['wc1'], biases['bc1'])
 	# Max Pooling (down-sampling)
-	conv1 = maxpool2d(conv1, 3, 3)
+	conv1 = tf.nn.relu(conv1)
+	conv1 = maxpool2d(conv1, 2, 2)
 
 	# Convolution Layer
 	conv2 = conv2d(conv1, weights['wc2'], biases['bc2'])
 	# Max Pooling (down-sampling)
-	conv2 = maxpool2d(conv2, 1, 1)
-
+	conv2 = tf.nn.relu(conv2)
 	print(conv2.get_shape())
 	
 	# Fully connected layer
@@ -86,19 +86,21 @@ def get_data(dir, ques):
 					spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
 					X.append(spectogram)
 					Y.append(lb.transform([que])[0])
+					break
 		else:
 			folder = que_dict[que]
 			for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
 				spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
 				X.append(spectogram)
 				Y.append(lb.transform([que])[0])
+				break
 
 	examples = np.asarray(X)
 	labels = np.asarray(Y)
 	indices = np.arange(len(examples))
 	np.random.shuffle(indices)
 
-	train_cutoff = int(0.7 * len(examples))
+	train_cutoff = int(0.8 * len(examples))
 
 	examples_train = examples[indices[:train_cutoff]]
 	labels_train = labels[indices[:train_cutoff]]
@@ -143,20 +145,20 @@ if __name__ == '__main__':
 	# Store layers weight & bias
 	weights = {
 		# 5x5 conv, 1 input, 32 outputs
-		'wc1': tf.Variable(tf.random_normal([20, 8, 1, 64])),
+		'wc1': tf.Variable(tf.truncated_normal([20, 8, 1, 64], stddev=0.01)),
 		# 5x5 conv, 32 inputs, 64 outputs
-		'wc2': tf.Variable(tf.random_normal([10, 4, 64, 64])),
+		'wc2': tf.Variable(tf.truncated_normal([10, 4, 64, 64], stddev=0.01)),
 		# fully connected, 7*7*64 inputs, 1024 outputs
-		'wd1': tf.Variable(tf.random_normal([64*96*64, 128])),
+		'wd1': tf.Variable(tf.truncated_normal([64*96*64, 128], stddev=0.01)),
 		# 1024 inputs, 10 outputs (class prediction)
-		'out': tf.Variable(tf.random_normal([128, num_classes]))
+		'out': tf.Variable(tf.truncated_normal([128, num_classes], stddev=0.01))
 	}
 
 	biases = {
-		'bc1': tf.Variable(tf.random_normal([64])),
-		'bc2': tf.Variable(tf.random_normal([64])),
-		'bd1': tf.Variable(tf.random_normal([128])),
-		'out': tf.Variable(tf.random_normal([num_classes]))
+		'bc1': tf.Variable(tf.zeros([64])),
+		'bc2': tf.Variable(tf.zeros([64])),
+		'bd1': tf.Variable(tf.zeros([128])),
+		'out': tf.Variable(tf.zeros([num_classes]))
 	}
 
 	# Construct model
@@ -203,9 +205,9 @@ if __name__ == '__main__':
 					loss, acc = sess.run([loss_op, accuracy], feed_dict={X: batch_x,
 																		 Y: batch_y,
 																		 keep_prob: 1.0})
-					# print("Step " + str(step) + ", Minibatch Loss= " + \
-					# 	  "{:.4f}".format(loss) + ", Training Accuracy= " + \
-					# 	  "{:.3f}".format(acc) + " for epoch {}".format(i))
+					print("Step " + str(step) + ", Minibatch Loss= " + \
+						  "{:.4f}".format(loss) + ", Training Accuracy= " + \
+						  "{:.3f}".format(acc) + " for epoch {}".format(i))
 
 			total_acc = 0
 			for step in range(int(len(examples_val)/batch_size)):
