@@ -9,7 +9,7 @@ import numpy as np
 import tensorflow as tf
 import vggish_input
 
-test_set_ques = ["yes", "no", "up", "down", "left", "right", "on", "off", "stop", "go"]
+test_set_ques = ["yes", "no", "up", "down", "left", "right", "on", "off", "stop", "go", "silence"]
 
 # Create some wrappers for simplicity
 def conv2d(x, W, b, strides=1):
