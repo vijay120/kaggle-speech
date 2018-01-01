@@ -57,6 +57,26 @@ def conv_net(x, weights, biases, dropout):
 	out = tf.add(tf.matmul(fc1, weights['out']), biases['out'])
 	return out
 
+def label_classes(dir, ques):
+	lb = preprocessing.LabelBinarizer()
+
+	folders = [os.path.join(dir, f) for f in listdir(dir) 
+				if not isfile(join(dir, f))]
+
+	que_dict = {}
+	for folder in folders:
+		for que in ques:
+			if que in folder:
+				if que in test_set_ques:
+					que_dict[que] = folder
+				else:
+					if "unknown" not in que_dict:
+						que_dict["unknown"] = []
+					que_dict["unknown"].append(folder)
+
+	lb.fit(list(que_dict.keys()))
+	return lb.classes_
+
 def get_data(dir, ques):
 	np.random.seed(0)
 	lb = preprocessing.LabelBinarizer()
@@ -89,14 +109,12 @@ def get_data(dir, ques):
 					spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
 					X.append(spectogram)
 					Y.append(lb.transform([que])[0])
-					break
 		else:
 			folder = que_dict[que]
 			for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
 				spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
 				X.append(spectogram)
 				Y.append(lb.transform([que])[0])
-				break
 
 	examples = np.asarray(X)
 	labels = np.asarray(Y)
@@ -124,7 +142,6 @@ def get_data_predict(folder):
 		counter += 1
 		if counter%100==0:
 			print(counter)
-			break
 
 	return np.asarray(X)
 
@@ -143,6 +160,8 @@ if __name__ == '__main__':
 	ques = set(args.q.split(','))
 	dir = args.dir
 	predict_time = args.p
+
+	classes_ = label_classes(dir, ques)
 
 	# tf Graph input
 	num_classes = len(test_set_ques) + 1
@@ -168,8 +187,6 @@ if __name__ == '__main__':
 		'out': tf.Variable(tf.zeros([num_classes]))
 	}
 
-	classes = tf.Variable([], name="classes", dtype=tf.string)
-
 	# Construct model
 	logits = conv_net(X, weights, biases, keep_prob)
 	prediction = tf.nn.softmax(logits)
@@ -183,7 +200,6 @@ if __name__ == '__main__':
 			sess.run(init)
 			imported_meta.restore(sess, tf.train.latest_checkpoint('/data/kaggle_model/'))
 
-
 			labels = sess.run([arg_max_prediction], feed_dict={X: predict_data, keep_prob: 1.0})
 			FIELD_NAMES = ["fname", "label"]
 
@@ -193,12 +209,12 @@ if __name__ == '__main__':
 
 				counter = 0
 				for file in listdir("/data/test/audio"):
-					row = {'fname':file, 'label':extracted_classes[labels[0][counter]]}
+					row = {'fname':file, 'label':classes_[labels[0][counter]]}
 					writer.writerow(row)
 					counter += 1
 
 	else:
-		examples_train, labels_train, examples_val, labels_val, label_classes = get_data(dir, ques)
+		examples_train, labels_train, examples_val, labels_val = get_data(dir, ques)
 
 		# Training Parameters
 		learning_rate = 0.001
@@ -227,7 +243,6 @@ if __name__ == '__main__':
 		with tf.Session() as sess:
 			# Run the initializer
 			sess.run(init)
-			tf.assign(classes, tf.constant(label_classes))
 
 			global_step = 0
 
