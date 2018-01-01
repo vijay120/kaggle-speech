@@ -158,6 +158,7 @@ if __name__ == '__main__':
 		'bd1': tf.Variable(tf.zeros([128])),
 		'out': tf.Variable(tf.zeros([num_classes]))
 	}
+
 	# Construct model
 	logits = conv_net(X, weights, biases, keep_prob)
 	prediction = tf.nn.softmax(logits)
@@ -165,7 +166,9 @@ if __name__ == '__main__':
 	if predict_time == "True":
 		imported_meta = tf.train.import_meta_graph("/data/kaggle_model/model_final.meta") 
 		predict_data = get_data_predict("/data/test/audio")
+		init = tf.global_variables_initializer()
 		with tf.Session() as sess:
+			sess.run(init)
 			imported_meta.restore(sess, tf.train.latest_checkpoint('/data/kaggle_model/'))
 			prediction = sess.run([prediction], feed_dict={X: predict_data, keep_prob: 1.0})
 			labels = tf.argmax(prediction, 1)
@@ -193,10 +196,8 @@ if __name__ == '__main__':
 		accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
 		saver = tf.train.Saver()
-
 		# Initialize the variables (i.e. assign their default value)
 		init = tf.global_variables_initializer()
-
 
 		# Start training
 		with tf.Session() as sess:
