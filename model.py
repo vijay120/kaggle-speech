@@ -136,6 +136,32 @@ if __name__ == '__main__':
 	dir = args.dir
 	predict_time = args.p
 
+	# tf Graph input
+	num_classes = len(test_set_ques) + 1
+	X = tf.placeholder(tf.float32, [None, 64, 96])
+	Y = tf.placeholder(tf.float32, [None, num_classes])
+	keep_prob = tf.placeholder(tf.float32) # dropout (keep probability)
+	# Store layers weight & bias
+	weights = {
+		# 5x5 conv, 1 input, 32 outputs
+		'wc1': tf.Variable(tf.truncated_normal([21, 8, 1, 94], stddev=0.01)),
+		# 5x5 conv, 32 inputs, 64 outputs
+		'wc2': tf.Variable(tf.truncated_normal([6, 4, 94, 94], stddev=0.01)),
+		# fully connected, 7*7*64 inputs, 1024 outputs
+		'wd1': tf.Variable(tf.truncated_normal([32*32*94, 128], stddev=0.01)),
+		# 1024 inputs, 10 outputs (class prediction)
+		'out': tf.Variable(tf.truncated_normal([128, num_classes], stddev=0.01))
+	}
+	biases = {
+		'bc1': tf.Variable(tf.zeros([94])),
+		'bc2': tf.Variable(tf.zeros([94])),
+		'bd1': tf.Variable(tf.zeros([128])),
+		'out': tf.Variable(tf.zeros([num_classes]))
+	}
+	# Construct model
+	logits = conv_net(X, weights, biases, keep_prob)
+	prediction = tf.nn.softmax(logits)
+
 	if predict_time == "True":
 		imported_meta = tf.train.import_meta_graph("/data/kaggle_model/model_final.meta") 
 		predict_data = get_data_predict("/data/test/audio")
@@ -155,41 +181,10 @@ if __name__ == '__main__':
 		epochs = 10
 
 		# Network Parameters
-		num_classes = len(test_set_ques) + 1 # MNIST total classes (0-9 digits)
 		dropout = 0.75 # Dropout, probability to keep units
 
-		# tf Graph input
-		X = tf.placeholder(tf.float32, [None, examples_train.shape[1], examples_train.shape[2]])
-		Y = tf.placeholder(tf.float32, [None, num_classes])
-		keep_prob = tf.placeholder(tf.float32) # dropout (keep probability)
-
-		# Store layers weight & bias
-		weights = {
-			# 5x5 conv, 1 input, 32 outputs
-			'wc1': tf.Variable(tf.truncated_normal([21, 8, 1, 94], stddev=0.01)),
-			# 5x5 conv, 32 inputs, 64 outputs
-			'wc2': tf.Variable(tf.truncated_normal([6, 4, 94, 94], stddev=0.01)),
-			# fully connected, 7*7*64 inputs, 1024 outputs
-			'wd1': tf.Variable(tf.truncated_normal([32*32*94, 128], stddev=0.01)),
-			# 1024 inputs, 10 outputs (class prediction)
-			'out': tf.Variable(tf.truncated_normal([128, num_classes], stddev=0.01))
-		}
-
-		biases = {
-			'bc1': tf.Variable(tf.zeros([94])),
-			'bc2': tf.Variable(tf.zeros([94])),
-			'bd1': tf.Variable(tf.zeros([128])),
-			'out': tf.Variable(tf.zeros([num_classes]))
-		}
-
-		# Construct model
-		logits = conv_net(X, weights, biases, keep_prob)
-		prediction = tf.nn.softmax(logits)
-
 		# Define loss and optimizer
-		loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
-			logits=logits, labels=Y))
-
+		loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=Y))
 		optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
 		train_op = optimizer.minimize(loss_op)
 
