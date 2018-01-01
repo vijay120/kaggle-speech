@@ -8,8 +8,13 @@ from os.path import isfile, join
 import numpy as np
 import tensorflow as tf
 import vggish_input
+import csv
 
 test_set_ques = ["yes", "no", "up", "down", "left", "right", "on", "off", "stop", "go", "silence"]
+extracted_classes = ['bed', 'bird', 'cat', 'dog', 'down', 'eight', 'five', 'four', 'go',
+       'happy', 'house', 'left', 'marvin', 'nine', 'no', 'off', 'on',
+       'one', 'right', 'seven', 'sheila', 'silence', 'six', 'stop',
+       'three', 'tree', 'two', 'unknown', 'up', 'wow', 'yes', 'zero']
 
 # Create some wrappers for simplicity
 def conv2d(x, W, b, strides=1):
@@ -106,7 +111,7 @@ def get_data(dir, ques):
 	examples_val = examples[indices[train_cutoff:]]
 	labels_val = labels[indices[train_cutoff:]]
 
-	return examples_train, labels_train, examples_val, labels_val
+	return examples_train, labels_train, examples_val, labels_val, lb.classes_
 
 
 def get_data_predict(folder):
@@ -115,8 +120,6 @@ def get_data_predict(folder):
 	for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
 		spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
 		X.append(spectogram)
-		if len(X) > 100:
-			break
 
 	return np.asarray(X)
 
@@ -172,9 +175,20 @@ if __name__ == '__main__':
 			sess.run(init)
 			imported_meta.restore(sess, tf.train.latest_checkpoint('/data/kaggle_model/'))
 			labels = sess.run([arg_max_prediction], feed_dict={X: predict_data, keep_prob: 1.0})
-			print(labels)
+			FIELD_NAMES = ["fname", "label"]
+			writer = csv.DictWriter("out.csv", delimiter=',', fieldnames=FIELD_NAMES)
+			writer.writeheader()
+
+			counter = 0
+			for file in listdir("/data/test/audio"):
+				row['fname'] = file
+				row['label'] = extracted_classes[counter]
+				writer.writerow(row)
+				counter += 1
+
 	else:
-		examples_train, labels_train, examples_val, labels_val = get_data(dir, ques)
+		examples_train, labels_train, examples_val, labels_val, classes = get_data(dir, ques)
+		labels = tf.get_variable("labels", dtype=tf.int32, initializer=tf.constant(classes))
 
 		# Training Parameters
 		learning_rate = 0.001
