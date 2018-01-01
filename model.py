@@ -158,12 +158,15 @@ if __name__ == '__main__':
 		# 1024 inputs, 10 outputs (class prediction)
 		'out': tf.Variable(tf.truncated_normal([128, num_classes], stddev=0.01))
 	}
+
 	biases = {
 		'bc1': tf.Variable(tf.zeros([94])),
 		'bc2': tf.Variable(tf.zeros([94])),
 		'bd1': tf.Variable(tf.zeros([128])),
 		'out': tf.Variable(tf.zeros([num_classes]))
 	}
+
+	classes = tf.Variable([], name="classes")
 
 	# Construct model
 	logits = conv_net(X, weights, biases, keep_prob)
@@ -177,6 +180,8 @@ if __name__ == '__main__':
 		with tf.Session() as sess:
 			sess.run(init)
 			imported_meta.restore(sess, tf.train.latest_checkpoint('/data/kaggle_model/'))
+
+
 			labels = sess.run([arg_max_prediction], feed_dict={X: predict_data, keep_prob: 1.0})
 			FIELD_NAMES = ["fname", "label"]
 
@@ -191,15 +196,14 @@ if __name__ == '__main__':
 					counter += 1
 
 	else:
-		examples_train, labels_train, examples_val, labels_val, classes = get_data(dir, ques)
-		labels = tf.get_variable("labels", dtype=tf.int32, initializer=tf.constant(classes))
+		examples_train, labels_train, examples_val, labels_val, label_classes = get_data(dir, ques)
 
 		# Training Parameters
 		learning_rate = 0.001
 		num_steps = 500
 		batch_size = 50
 		display_step = 100
-		epochs = 10
+		epochs = 1
 
 		# Network Parameters
 		dropout = 0.75 # Dropout, probability to keep units
@@ -221,6 +225,7 @@ if __name__ == '__main__':
 		with tf.Session() as sess:
 			# Run the initializer
 			sess.run(init)
+			tf.assign(classes, tf.constant(label_classes))
 
 			global_step = 0
 
