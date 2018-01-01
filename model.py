@@ -174,14 +174,19 @@ if __name__ == '__main__':
 	correct_pred = tf.equal(tf.argmax(prediction, 1), tf.argmax(Y, 1))
 	accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
+	saver = tf.train.Saver()
+
 	# Initialize the variables (i.e. assign their default value)
 	init = tf.global_variables_initializer()
+
 
 	# Start training
 	with tf.Session() as sess:
 
 		# Run the initializer
 		sess.run(init)
+
+		global_step = 0
 
 		for i in range(epochs):
 			indices = np.arange(len(examples_train))
@@ -190,6 +195,7 @@ if __name__ == '__main__':
 			labels_train = labels_train[indices]
 
 			for step in range(int(len(examples_train)/batch_size)):
+
 				batch_x = examples_train[step*batch_size : (step+1)*batch_size]
 				batch_y = labels_train[step*batch_size : (step+1)*batch_size]
 				
@@ -206,6 +212,11 @@ if __name__ == '__main__':
 					print("Step " + str(step) + ", Minibatch Loss= " + \
 						  "{:.4f}".format(loss) + ", Training Accuracy= " + \
 						  "{:.3f}".format(acc) + " for epoch {}".format(i))
+
+					global_step += 1
+					saver.save(sess, '/data/kaggle_model/model_iter', global_step=global_step)
+
+			saver.save(sess, '/data/kaggle_model/model_final')
 
 			total_acc = 0
 			for step in range(int(len(examples_val)/batch_size)):
