@@ -54,7 +54,7 @@ def conv_net(x, weights, biases, dropout):
 	fc1 = tf.nn.dropout(fc1, dropout)
 
 	# Output, class prediction
-	out = tf.add(tf.matmul(fc1, weights['out']), biases['out'])
+	out = tf.add(tf.matmul(fc1, weights['out']), biases['outb'])
 	return out
 
 def label_classes(dir, ques):
