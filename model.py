@@ -142,6 +142,7 @@ def get_data_predict(folder):
 		counter += 1
 		if counter%1000==0:
 			print(counter)
+			break
 
 	return np.asarray(X)
 
@@ -170,41 +171,44 @@ if __name__ == '__main__':
 	X = tf.placeholder(tf.float32, [None, 64, 96])
 	Y = tf.placeholder(tf.float32, [None, num_classes])
 	keep_prob = tf.placeholder(tf.float32) # dropout (keep probability)
-	# Store layers weight & bias
-	weights = {
-		# 5x5 conv, 1 input, 32 outputs
-		'wc1': tf.Variable(tf.truncated_normal([21, 8, 1, 94], stddev=0.01)),
-		# 5x5 conv, 32 inputs, 64 outputs
-		'wc2': tf.Variable(tf.truncated_normal([6, 4, 94, 94], stddev=0.01)),
-		# fully connected, 7*7*64 inputs, 1024 outputs
-		'wd1': tf.Variable(tf.truncated_normal([32*32*94, 128], stddev=0.01)),
-		# 1024 inputs, 10 outputs (class prediction)
-		'out': tf.Variable(tf.truncated_normal([128, num_classes], stddev=0.01))
-	}
-
-	biases = {
-		'bc1': tf.Variable(tf.zeros([94])),
-		'bc2': tf.Variable(tf.zeros([94])),
-		'bd1': tf.Variable(tf.zeros([128])),
-		'out': tf.Variable(tf.zeros([num_classes]))
-	}
-
-	# Construct model
-	logits = conv_net(X, weights, biases, keep_prob)
-	prediction = tf.nn.softmax(logits)
-	arg_max_prediction = tf.argmax(prediction, 1)
 
 	if predict_file != "":
 		print("Predict time modelling")
 		imported_meta = tf.train.import_meta_graph("/data/kaggle_model/model_final.meta") 
 		predict_data = get_data_predict(predict_file)
-		init = tf.global_variables_initializer()
+		#init = tf.global_variables_initializer()
 
 		with tf.Session() as sess:
-			sess.run(init)
+			#sess.run(init)
 			last_checkpoint = tf.train.latest_checkpoint('/data/kaggle_model/')
 			print("Loading checkpoint: {}".format(last_checkpoint))
 			imported_meta.restore(sess, last_checkpoint)
+
+			graph = tf.get_default_graph()
+
+			# Store layers weight & bias
+			weights = {
+				# 5x5 conv, 1 input, 32 outputs
+				'wc1': graph.get_tensor_by_name("wc1:0"),
+				# 5x5 conv, 32 inputs, 64 outputs
+				'wc2': graph.get_tensor_by_name("wc2:0"),
+				# fully connected, 7*7*64 inputs, 1024 outputs
+				'wd1': graph.get_tensor_by_name("wd1:0"),
+				# 1024 inputs, 10 outputs (class prediction)
+				'out': graph.get_tensor_by_name("out:0")
+			}
+
+			biases = {
+				'bc1': tf.Variable(tf.zeros([94])),
+				'bc2': tf.Variable(tf.zeros([94])),
+				'bd1': tf.Variable(tf.zeros([128])),
+				'bout': tf.Variable(tf.zeros([num_classes]))
+			}
+
+			# Construct model
+			logits = conv_net(X, weights, biases, keep_prob)
+			prediction = tf.nn.softmax(logits)
+			arg_max_prediction = tf.argmax(prediction, 1)
 
 			results = []
 			steps = int(len(predict_data)/batch_size)
@@ -228,6 +232,31 @@ if __name__ == '__main__':
 					counter += 1
 
 	else:
+		# Store layers weight & bias
+		weights = {
+			# 5x5 conv, 1 input, 32 outputs
+			'wc1': tf.Variable(tf.truncated_normal([21, 8, 1, 94], stddev=0.01)),
+			# 5x5 conv, 32 inputs, 64 outputs
+			'wc2': tf.Variable(tf.truncated_normal([6, 4, 94, 94], stddev=0.01)),
+			# fully connected, 7*7*64 inputs, 1024 outputs
+			'wd1': tf.Variable(tf.truncated_normal([32*32*94, 128], stddev=0.01)),
+			# 1024 inputs, 10 outputs (class prediction)
+			'out': tf.Variable(tf.truncated_normal([128, num_classes], stddev=0.01))
+		}
+
+		biases = {
+			'bc1': tf.Variable(tf.zeros([94])),
+			'bc2': tf.Variable(tf.zeros([94])),
+			'bd1': tf.Variable(tf.zeros([128])),
+			'bout': tf.Variable(tf.zeros([num_classes]))
+		}
+
+		# Construct model
+		logits = conv_net(X, weights, biases, keep_prob)
+		prediction = tf.nn.softmax(logits)
+		arg_max_prediction = tf.argmax(prediction, 1)
+
+
 		print("Training time modelling")
 		examples_train, labels_train, examples_val, labels_val = get_data(dir, ques)
 
