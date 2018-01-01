@@ -89,12 +89,14 @@ def get_data(dir, ques):
 					spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
 					X.append(spectogram)
 					Y.append(lb.transform([que])[0])
+					break
 		else:
 			folder = que_dict[que]
 			for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
 				spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
 				X.append(spectogram)
 				Y.append(lb.transform([que])[0])
+				break
 
 	examples = np.asarray(X)
 	labels = np.asarray(Y)
@@ -166,7 +168,7 @@ if __name__ == '__main__':
 		'out': tf.Variable(tf.zeros([num_classes]))
 	}
 
-	classes = tf.Variable([], name="classes")
+	classes = tf.Variable([], name="classes", dtype=tf.string)
 
 	# Construct model
 	logits = conv_net(X, weights, biases, keep_prob)
