@@ -136,7 +136,7 @@ def get_data_predict(folder):
 	X = []
 
 	counter = 0
-	for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
+	for file in [os.path.join(folder, f) for f in listdir(folder)]:
 		spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
 		X.append(spectogram)
 		counter += 1
@@ -199,6 +199,7 @@ if __name__ == '__main__':
 		imported_meta = tf.train.import_meta_graph("/data/kaggle_model/model_final.meta") 
 		predict_data = get_data_predict("/data/test/audio")
 		init = tf.global_variables_initializer()
+
 		with tf.Session() as sess:
 			sess.run(init)
 			last_checkpoint = tf.train.latest_checkpoint('/data/kaggle_model/')
@@ -207,7 +208,7 @@ if __name__ == '__main__':
 
 			results = []
 			steps = int(len(predict_data)/batch_size)
-			for i in range(steps):
+			for i in range(steps + 1):
 				start_index = i * batch_size
 				end_index = (i+1) * batch_size
 
