@@ -142,7 +142,6 @@ def get_data_predict(folder):
 		counter += 1
 		if counter%1000==0:
 			print(counter)
-			break
 
 	return np.asarray(X)
 
@@ -264,7 +263,7 @@ if __name__ == '__main__':
 		learning_rate = 0.001
 		num_steps = 500
 		display_step = 100
-		epochs = 1
+		epochs = 15
 
 		# Network Parameters
 		dropout = 0.75 # Dropout, probability to keep units
