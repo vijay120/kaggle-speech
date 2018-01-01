@@ -162,6 +162,7 @@ if __name__ == '__main__':
 	predict_time = args.p
 
 	classes_ = label_classes(dir, ques)
+	batch_size = 50
 
 	# tf Graph input
 	num_classes = len(test_set_ques) + 1
@@ -200,7 +201,15 @@ if __name__ == '__main__':
 			sess.run(init)
 			imported_meta.restore(sess, tf.train.latest_checkpoint('/data/kaggle_model/'))
 
-			labels = sess.run([arg_max_prediction], feed_dict={X: predict_data, keep_prob: 1.0})
+			results = []
+			steps = int(len(predict_data)/batch_size)
+			for i in range(steps):
+				start_index = i * batch_size
+				end_index = (i+1) * batch_size
+
+				labels = sess.run([arg_max_prediction], feed_dict={X: predict_data[start_index: end_index], keep_prob: 1.0})
+				results += labels[0].tolist()
+
 			FIELD_NAMES = ["fname", "label"]
 
 			with open("out.csv", 'w+') as out:
@@ -209,7 +218,7 @@ if __name__ == '__main__':
 
 				counter = 0
 				for file in listdir("/data/test/audio"):
-					row = {'fname':file, 'label':classes_[labels[0][counter]]}
+					row = {'fname':file, 'label':classes_[results[counter]]}
 					writer.writerow(row)
 					counter += 1
 
@@ -219,7 +228,6 @@ if __name__ == '__main__':
 		# Training Parameters
 		learning_rate = 0.001
 		num_steps = 500
-		batch_size = 50
 		display_step = 100
 		epochs = 1
 
