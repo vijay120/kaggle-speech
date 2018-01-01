@@ -213,6 +213,8 @@ if __name__ == '__main__':
 
 			FIELD_NAMES = ["fname", "label"]
 
+			print(results)
+
 			with open("out.csv", 'w+') as out:
 				writer = csv.DictWriter(out, delimiter=',', fieldnames=FIELD_NAMES)
 				writer.writeheader()
