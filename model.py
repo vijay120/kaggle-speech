@@ -67,12 +67,13 @@ def label_classes(dir, ques):
 	for folder in folders:
 		for que in ques:
 			if que in folder:
-				if que in test_set_ques:
-					que_dict[que] = folder
-				else:
-					if "unknown" not in que_dict:
-						que_dict["unknown"] = []
-					que_dict["unknown"].append(folder)
+				que_dict[que] = folder
+				# if que in test_set_ques:
+				# 	que_dict[que] = folder
+				# else:
+				# 	if "unknown" not in que_dict:
+				# 		que_dict["unknown"] = []
+				# 	que_dict["unknown"].append(folder)
 
 	lb.fit(list(que_dict.keys()))
 	return lb.classes_
@@ -88,12 +89,13 @@ def get_data(dir, ques):
 	for folder in folders:
 		for que in ques:
 			if que in folder:
-				if que in test_set_ques:
-					que_dict[que] = folder
-				else:
-					if "unknown" not in que_dict:
-						que_dict["unknown"] = []
-					que_dict["unknown"].append(folder)
+				que_dict[que] = folder
+				# if que in test_set_ques:
+				# 	que_dict[que] = folder
+				# else:
+				# 	if "unknown" not in que_dict:
+				# 		que_dict["unknown"] = []
+				# 	que_dict["unknown"].append(folder)
 
 	lb.fit(list(que_dict.keys()))
 
@@ -101,20 +103,20 @@ def get_data(dir, ques):
 	Y = []
 
 	for que in que_dict.keys():
-		if que == "unknown":
-			folders = que_dict[que]
+		# if que == "unknown":
+		# 	folders = que_dict[que]
 
-			for folder in folders:
-				for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
-					spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
-					X.append(spectogram)
-					Y.append(lb.transform([que])[0])
-		else:
-			folder = que_dict[que]
-			for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
-				spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
-				X.append(spectogram)
-				Y.append(lb.transform([que])[0])
+		# 	for folder in folders:
+		# 		for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
+		# 			spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
+		# 			X.append(spectogram)
+		# 			Y.append(lb.transform([que])[0])
+		# else:
+		folder = que_dict[que]
+		for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
+			spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
+			X.append(spectogram)
+			Y.append(lb.transform([que])[0])
 
 	examples = np.asarray(X)
 	labels = np.asarray(Y)
@@ -166,7 +168,8 @@ if __name__ == '__main__':
 	batch_size = 50
 
 	# tf Graph input
-	num_classes = len(test_set_ques) + 1
+	#num_classes = len(test_set_ques) + 1
+	num_classes = len(ques)
 	X = tf.placeholder(tf.float32, [None, 64, 96])
 	Y = tf.placeholder(tf.float32, [None, num_classes])
 	keep_prob = tf.placeholder(tf.float32) # dropout (keep probability)
@@ -263,10 +266,10 @@ if __name__ == '__main__':
 		learning_rate = 0.001
 		num_steps = 500
 		display_step = 100
-		epochs = 15
+		epochs = 50
 
 		# Network Parameters
-		dropout = 0.75 # Dropout, probability to keep units
+		dropout = 0.5 # Dropout, probability to keep units
 
 		# Define loss and optimizer
 		loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=Y))
@@ -330,6 +333,3 @@ if __name__ == '__main__':
 					total_acc += batch_acc/(int(len(examples_val)/batch_size)*1.0)
 
 				print("Validation acc is: {}".format(total_acc))
-
-
-
