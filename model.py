@@ -11,10 +11,8 @@ import vggish_input
 import csv
 
 test_set_ques = ["yes", "no", "up", "down", "left", "right", "on", "off", "stop", "go", "silence"]
-extracted_classes = ['bed', 'bird', 'cat', 'dog', 'down', 'eight', 'five', 'four', 'go',
-       'happy', 'house', 'left', 'marvin', 'nine', 'no', 'off', 'on',
-       'one', 'right', 'seven', 'sheila', 'silence', 'six', 'stop',
-       'three', 'tree', 'two', 'unknown', 'up', 'wow', 'yes', 'zero']
+extracted_classes = ['down', 'go', 'left', 'no', 'off', 'on', 'right', 'silence', 'stop',
+       'unknown', 'up', 'yes']
 
 # Create some wrappers for simplicity
 def conv2d(x, W, b, strides=1):
@@ -117,9 +115,14 @@ def get_data(dir, ques):
 def get_data_predict(folder):
 	X = []
 
+	counter = 0
 	for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
 		spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
 		X.append(spectogram)
+		counter += 1
+		if counter%100==0:
+			print(counter)
+			break
 
 	return np.asarray(X)
 
@@ -182,7 +185,7 @@ if __name__ == '__main__':
 			counter = 0
 			for file in listdir("/data/test/audio"):
 				row['fname'] = file
-				row['label'] = extracted_classes[counter]
+				row['label'] = extracted_classes[labels[0][counter]]
 				writer.writerow(row)
 				counter += 1
 
