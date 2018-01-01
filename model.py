@@ -140,8 +140,9 @@ def get_data_predict(folder):
 		spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
 		X.append(spectogram)
 		counter += 1
-		if counter%100==0:
+		if counter%1000==0:
 			print(counter)
+			break
 
 	return np.asarray(X)
 
