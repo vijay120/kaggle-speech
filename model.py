@@ -142,7 +142,6 @@ def get_data_predict(folder):
 		counter += 1
 		if counter%1000==0:
 			print(counter)
-			break
 
 	return np.asarray(X)
 
@@ -212,8 +211,6 @@ if __name__ == '__main__':
 				results += labels[0].tolist()
 
 			FIELD_NAMES = ["fname", "label"]
-
-			print(results)
 
 			with open("out.csv", 'w+') as out:
 				writer = csv.DictWriter(out, delimiter=',', fieldnames=FIELD_NAMES)
