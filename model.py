@@ -159,7 +159,7 @@ if __name__ == '__main__':
 
 	ques = set(args.q.split(','))
 	dir = args.dir
-	predict_time = args.p
+	predict_file = args.p
 
 	classes_ = label_classes(dir, ques)
 	print("Classes: {}".format(classes_))
@@ -194,10 +194,10 @@ if __name__ == '__main__':
 	prediction = tf.nn.softmax(logits)
 	arg_max_prediction = tf.argmax(prediction, 1)
 
-	if predict_time == "True":
+	if predict_file != "":
 		print("Predict time modelling")
 		imported_meta = tf.train.import_meta_graph("/data/kaggle_model/model_final.meta") 
-		predict_data = get_data_predict("/data/test/audio")
+		predict_data = get_data_predict(predict_file)
 		init = tf.global_variables_initializer()
 
 		with tf.Session() as sess:
@@ -222,7 +222,7 @@ if __name__ == '__main__':
 				writer.writeheader()
 
 				counter = 0
-				for file in listdir("/data/test/audio"):
+				for file in listdir(predict_file):
 					row = {'fname':file, 'label':classes_[results[counter]]}
 					writer.writerow(row)
 					counter += 1
@@ -286,7 +286,7 @@ if __name__ == '__main__':
 							  "{:.4f}".format(loss) + ", Training Accuracy= " + \
 							  "{:.3f}".format(acc) + " for epoch {}".format(i))
 
-						print("Confusion matrix is: {}\n".format(confusion))
+						print("Confusion matrix is:\n {}".format(confusion))
 
 						global_step += 1
 						print("Global step: {}".format(global_step))
