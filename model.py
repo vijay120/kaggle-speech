@@ -162,6 +162,7 @@ if __name__ == '__main__':
 	predict_time = args.p
 
 	classes_ = label_classes(dir, ques)
+	print("Classes: {}".format(classes_))
 	batch_size = 50
 
 	# tf Graph input
@@ -194,12 +195,15 @@ if __name__ == '__main__':
 	arg_max_prediction = tf.argmax(prediction, 1)
 
 	if predict_time == "True":
+		print("Predict time modelling")
 		imported_meta = tf.train.import_meta_graph("/data/kaggle_model/model_final.meta") 
 		predict_data = get_data_predict("/data/test/audio")
 		init = tf.global_variables_initializer()
 		with tf.Session() as sess:
 			sess.run(init)
-			imported_meta.restore(sess, tf.train.latest_checkpoint('/data/kaggle_model/'))
+			last_checkpoint = tf.train.latest_checkpoint('/data/kaggle_model/')
+			print("Loading checkpoint: {}".format(last_checkpoint))
+			imported_meta.restore(sess, last_checkpoint)
 
 			results = []
 			steps = int(len(predict_data)/batch_size)
@@ -223,6 +227,7 @@ if __name__ == '__main__':
 					counter += 1
 
 	else:
+		print("Training time modelling")
 		examples_train, labels_train, examples_val, labels_val = get_data(dir, ques)
 
 		# Training Parameters
@@ -242,6 +247,7 @@ if __name__ == '__main__':
 		# Evaluate model
 		correct_pred = tf.equal(arg_max_prediction, tf.argmax(Y, 1))
 		accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+		confusion_matrix = tf.contrib.metrics.confusion_matrix(tf.argmax(Y, 1), arg_max_prediction)
 
 		saver = tf.train.Saver()
 		# Initialize the variables (i.e. assign their default value)
@@ -272,12 +278,14 @@ if __name__ == '__main__':
 					sess.run(train_op, feed_dict={X: batch_x, Y: batch_y, keep_prob: dropout})
 					if step % display_step == 0 or step == 1:
 						# Calculate batch loss and accuracy
-						loss, acc = sess.run([loss_op, accuracy], feed_dict={X: batch_x,
+						loss, acc, confusion = sess.run([loss_op, accuracy, confusion_matrix], feed_dict={X: batch_x,
 																			 Y: batch_y,
 																			 keep_prob: 1.0})
 						print("Step " + str(step) + ", Minibatch Loss= " + \
 							  "{:.4f}".format(loss) + ", Training Accuracy= " + \
 							  "{:.3f}".format(acc) + " for epoch {}".format(i))
+
+						print("Confusion matrix is: {}\n".format(confusion))
 
 						global_step += 1
 						print("Global step: {}".format(global_step))
