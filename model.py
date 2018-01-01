@@ -174,13 +174,13 @@ if __name__ == '__main__':
 
 	if predict_file != "":
 		print("Predict time modelling")
-		imported_meta = tf.train.import_meta_graph("/data/kaggle_model/model_final.meta") 
+		imported_meta = tf.train.import_meta_graph("/data/kaggle_model_2/model_final.meta") 
 		predict_data = get_data_predict(predict_file)
 		#init = tf.global_variables_initializer()
 
 		with tf.Session() as sess:
 			#sess.run(init)
-			last_checkpoint = tf.train.latest_checkpoint('/data/kaggle_model/')
+			last_checkpoint = tf.train.latest_checkpoint('/data/kaggle_model_2/')
 			print("Loading checkpoint: {}".format(last_checkpoint))
 			imported_meta.restore(sess, last_checkpoint)
 
@@ -199,10 +199,10 @@ if __name__ == '__main__':
 			}
 
 			biases = {
-				'bc1': tf.Variable(tf.zeros([94])),
-				'bc2': tf.Variable(tf.zeros([94])),
-				'bd1': tf.Variable(tf.zeros([128])),
-				'bout': tf.Variable(tf.zeros([num_classes]))
+				'bc1': graph.get_tensor_by_name("bc1:0"),
+				'bc2': graph.get_tensor_by_name("bc2:0"),
+				'bd1': graph.get_tensor_by_name("bd1:0"),
+				'bout': graph.get_tensor_by_name("bout:0"),
 			}
 
 			# Construct model
@@ -235,20 +235,20 @@ if __name__ == '__main__':
 		# Store layers weight & bias
 		weights = {
 			# 5x5 conv, 1 input, 32 outputs
-			'wc1': tf.Variable(tf.truncated_normal([21, 8, 1, 94], stddev=0.01)),
+			'wc1': tf.Variable(tf.truncated_normal([21, 8, 1, 94], stddev=0.01), name='wc1'),
 			# 5x5 conv, 32 inputs, 64 outputs
-			'wc2': tf.Variable(tf.truncated_normal([6, 4, 94, 94], stddev=0.01)),
+			'wc2': tf.Variable(tf.truncated_normal([6, 4, 94, 94], stddev=0.01), name='wc2'),
 			# fully connected, 7*7*64 inputs, 1024 outputs
-			'wd1': tf.Variable(tf.truncated_normal([32*32*94, 128], stddev=0.01)),
+			'wd1': tf.Variable(tf.truncated_normal([32*32*94, 128], stddev=0.01), name='wd1'),
 			# 1024 inputs, 10 outputs (class prediction)
-			'out': tf.Variable(tf.truncated_normal([128, num_classes], stddev=0.01))
+			'out': tf.Variable(tf.truncated_normal([128, num_classes], stddev=0.01), name='out')
 		}
 
 		biases = {
-			'bc1': tf.Variable(tf.zeros([94])),
-			'bc2': tf.Variable(tf.zeros([94])),
-			'bd1': tf.Variable(tf.zeros([128])),
-			'bout': tf.Variable(tf.zeros([num_classes]))
+			'bc1': tf.Variable(tf.zeros([94]), name='bc1'),
+			'bc2': tf.Variable(tf.zeros([94]), name='bc2'),
+			'bd1': tf.Variable(tf.zeros([128]), name='bd1'),
+			'bout': tf.Variable(tf.zeros([num_classes]), name='bout')
 		}
 
 		# Construct model
@@ -264,7 +264,7 @@ if __name__ == '__main__':
 		learning_rate = 0.001
 		num_steps = 500
 		display_step = 100
-		epochs = 10
+		epochs = 1
 
 		# Network Parameters
 		dropout = 0.75 # Dropout, probability to keep units
@@ -319,9 +319,9 @@ if __name__ == '__main__':
 
 						global_step += 1
 						print("Global step: {}".format(global_step))
-						saver.save(sess, '/data/kaggle_model/model_iter', global_step=global_step)
+						saver.save(sess, '/data/kaggle_model_2/model_iter', global_step=global_step)
 
-				saver.save(sess, '/data/kaggle_model/model_final')
+				saver.save(sess, '/data/kaggle_model_2/model_final')
 
 				total_acc = 0
 				for step in range(int(len(examples_val)/batch_size)):
