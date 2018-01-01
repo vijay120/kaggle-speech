@@ -179,15 +179,17 @@ if __name__ == '__main__':
 			imported_meta.restore(sess, tf.train.latest_checkpoint('/data/kaggle_model/'))
 			labels = sess.run([arg_max_prediction], feed_dict={X: predict_data, keep_prob: 1.0})
 			FIELD_NAMES = ["fname", "label"]
-			writer = csv.DictWriter("out.csv", delimiter=',', fieldnames=FIELD_NAMES)
-			writer.writeheader()
+			
+			with open("out.csv", 'w+') as out:
+				writer = csv.DictWriter(out, delimiter=',', fieldnames=FIELD_NAMES)
+				writer.writeheader()
 
-			counter = 0
-			for file in listdir("/data/test/audio"):
-				row['fname'] = file
-				row['label'] = extracted_classes[labels[0][counter]]
-				writer.writerow(row)
-				counter += 1
+				counter = 0
+				for file in listdir("/data/test/audio"):
+					row['fname'] = file
+					row['label'] = extracted_classes[labels[0][counter]]
+					writer.writerow(row)
+					counter += 1
 
 	else:
 		examples_train, labels_train, examples_val, labels_val, classes = get_data(dir, ques)
