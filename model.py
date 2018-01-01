@@ -109,6 +109,18 @@ def get_data(dir, ques):
 	return examples_train, labels_train, examples_val, labels_val
 
 
+def get_data_predict(folder):
+	X = []
+
+	for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
+		spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
+		X.append(spectogram)
+		if len(X) > 100:
+			break
+
+	return np.asarray(X)
+
+
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(
 		description=__doc__,
@@ -116,116 +128,126 @@ if __name__ == '__main__':
 
 	parser.add_argument('q', help='A comma separated list of ques')
 	parser.add_argument('dir', help='The directory containing the files')
+	parser.add_argument('p', help='Predict time workflow')
 
 	args = parser.parse_args()
 
 	ques = set(args.q.split(','))
 	dir = args.dir
+	predict_time = args.p
 
-	examples_train, labels_train, examples_val, labels_val = get_data(dir, ques)
+	if predict_time == "True":
+		imported_meta = tf.train.import_meta_graph("/data/kaggle_model/model_final.meta") 
+		predict_data = get_data_predict("/data/test/audio")
+		with tf.Session() as sess:
+			imported_meta.restore(sess, tf.train.latest_checkpoint('/data/kaggle_model/'))
+			prediction = sess.run([prediction], feed_dict={X: predict_data, keep_prob: 1.0})
+			labels = tf.argmax(prediction, 1)
+			print(labels)
+	else:
+		examples_train, labels_train, examples_val, labels_val = get_data(dir, ques)
 
-	# Training Parameters
-	learning_rate = 0.001
-	num_steps = 500
-	batch_size = 50
-	display_step = 10
-	epochs = 10
+		# Training Parameters
+		learning_rate = 0.001
+		num_steps = 500
+		batch_size = 50
+		display_step = 100
+		epochs = 10
 
-	# Network Parameters
-	num_classes = len(test_set_ques) + 1 # MNIST total classes (0-9 digits)
-	dropout = 0.75 # Dropout, probability to keep units
+		# Network Parameters
+		num_classes = len(test_set_ques) + 1 # MNIST total classes (0-9 digits)
+		dropout = 0.75 # Dropout, probability to keep units
 
-	# tf Graph input
-	X = tf.placeholder(tf.float32, [None, examples_train.shape[1], examples_train.shape[2]])
-	Y = tf.placeholder(tf.float32, [None, num_classes])
-	keep_prob = tf.placeholder(tf.float32) # dropout (keep probability)
+		# tf Graph input
+		X = tf.placeholder(tf.float32, [None, examples_train.shape[1], examples_train.shape[2]])
+		Y = tf.placeholder(tf.float32, [None, num_classes])
+		keep_prob = tf.placeholder(tf.float32) # dropout (keep probability)
 
-	# Store layers weight & bias
-	weights = {
-		# 5x5 conv, 1 input, 32 outputs
-		'wc1': tf.Variable(tf.truncated_normal([21, 8, 1, 94], stddev=0.01)),
-		# 5x5 conv, 32 inputs, 64 outputs
-		'wc2': tf.Variable(tf.truncated_normal([6, 4, 94, 94], stddev=0.01)),
-		# fully connected, 7*7*64 inputs, 1024 outputs
-		'wd1': tf.Variable(tf.truncated_normal([32*32*94, 128], stddev=0.01)),
-		# 1024 inputs, 10 outputs (class prediction)
-		'out': tf.Variable(tf.truncated_normal([128, num_classes], stddev=0.01))
-	}
+		# Store layers weight & bias
+		weights = {
+			# 5x5 conv, 1 input, 32 outputs
+			'wc1': tf.Variable(tf.truncated_normal([21, 8, 1, 94], stddev=0.01)),
+			# 5x5 conv, 32 inputs, 64 outputs
+			'wc2': tf.Variable(tf.truncated_normal([6, 4, 94, 94], stddev=0.01)),
+			# fully connected, 7*7*64 inputs, 1024 outputs
+			'wd1': tf.Variable(tf.truncated_normal([32*32*94, 128], stddev=0.01)),
+			# 1024 inputs, 10 outputs (class prediction)
+			'out': tf.Variable(tf.truncated_normal([128, num_classes], stddev=0.01))
+		}
 
-	biases = {
-		'bc1': tf.Variable(tf.zeros([94])),
-		'bc2': tf.Variable(tf.zeros([94])),
-		'bd1': tf.Variable(tf.zeros([128])),
-		'out': tf.Variable(tf.zeros([num_classes]))
-	}
+		biases = {
+			'bc1': tf.Variable(tf.zeros([94])),
+			'bc2': tf.Variable(tf.zeros([94])),
+			'bd1': tf.Variable(tf.zeros([128])),
+			'out': tf.Variable(tf.zeros([num_classes]))
+		}
 
-	# Construct model
-	logits = conv_net(X, weights, biases, keep_prob)
-	prediction = tf.nn.softmax(logits)
+		# Construct model
+		logits = conv_net(X, weights, biases, keep_prob)
+		prediction = tf.nn.softmax(logits)
 
-	# Define loss and optimizer
-	loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
-		logits=logits, labels=Y))
+		# Define loss and optimizer
+		loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
+			logits=logits, labels=Y))
 
-	optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
-	train_op = optimizer.minimize(loss_op)
+		optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
+		train_op = optimizer.minimize(loss_op)
 
-	# Evaluate model
-	correct_pred = tf.equal(tf.argmax(prediction, 1), tf.argmax(Y, 1))
-	accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+		# Evaluate model
+		correct_pred = tf.equal(tf.argmax(prediction, 1), tf.argmax(Y, 1))
+		accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
-	saver = tf.train.Saver()
+		saver = tf.train.Saver()
 
-	# Initialize the variables (i.e. assign their default value)
-	init = tf.global_variables_initializer()
+		# Initialize the variables (i.e. assign their default value)
+		init = tf.global_variables_initializer()
 
 
-	# Start training
-	with tf.Session() as sess:
+		# Start training
+		with tf.Session() as sess:
+			# Run the initializer
+			sess.run(init)
 
-		# Run the initializer
-		sess.run(init)
+			global_step = 0
 
-		global_step = 0
+			for i in range(epochs):
+				indices = np.arange(len(examples_train))
+				np.random.shuffle(indices)
+				examples_train = examples_train[indices]
+				labels_train = labels_train[indices]
 
-		for i in range(epochs):
-			indices = np.arange(len(examples_train))
-			np.random.shuffle(indices)
-			examples_train = examples_train[indices]
-			labels_train = labels_train[indices]
+				for step in range(int(len(examples_train)/batch_size)):
 
-			for step in range(int(len(examples_train)/batch_size)):
+					batch_x = examples_train[step*batch_size : (step+1)*batch_size]
+					batch_y = labels_train[step*batch_size : (step+1)*batch_size]
+					
+					if len(batch_x) == 0:
+						break
+							
+					# Run optimization op (backprop)
+					sess.run(train_op, feed_dict={X: batch_x, Y: batch_y, keep_prob: dropout})
+					if step % display_step == 0 or step == 1:
+						# Calculate batch loss and accuracy
+						loss, acc = sess.run([loss_op, accuracy], feed_dict={X: batch_x,
+																			 Y: batch_y,
+																			 keep_prob: 1.0})
+						print("Step " + str(step) + ", Minibatch Loss= " + \
+							  "{:.4f}".format(loss) + ", Training Accuracy= " + \
+							  "{:.3f}".format(acc) + " for epoch {}".format(i))
 
-				batch_x = examples_train[step*batch_size : (step+1)*batch_size]
-				batch_y = labels_train[step*batch_size : (step+1)*batch_size]
-				
-				if len(batch_x) == 0:
-					break
-						
-				# Run optimization op (backprop)
-				sess.run(train_op, feed_dict={X: batch_x, Y: batch_y, keep_prob: dropout})
-				if step % display_step == 0 or step == 1:
-					# Calculate batch loss and accuracy
-					loss, acc = sess.run([loss_op, accuracy], feed_dict={X: batch_x,
-																		 Y: batch_y,
-																		 keep_prob: 1.0})
-					print("Step " + str(step) + ", Minibatch Loss= " + \
-						  "{:.4f}".format(loss) + ", Training Accuracy= " + \
-						  "{:.3f}".format(acc) + " for epoch {}".format(i))
+						global_step += 1
+						saver.save(sess, '/data/kaggle_model/model_iter', global_step=global_step)
 
-					global_step += 1
-					saver.save(sess, '/data/kaggle_model/model_iter', global_step=global_step)
+				saver.save(sess, '/data/kaggle_model/model_final')
 
-			saver.save(sess, '/data/kaggle_model/model_final')
+				total_acc = 0
+				for step in range(int(len(examples_val)/batch_size)):
+					batch_x = examples_val[step*batch_size : (step+1)*batch_size]
+					batch_y = labels_val[step*batch_size : (step+1)*batch_size]		
+					batch_acc = sess.run(accuracy, feed_dict={X: batch_x, Y: batch_y, keep_prob: 1.0})
+					total_acc += batch_acc/(int(len(examples_val)/batch_size)*1.0)
 
-			total_acc = 0
-			for step in range(int(len(examples_val)/batch_size)):
-				batch_x = examples_val[step*batch_size : (step+1)*batch_size]
-				batch_y = labels_val[step*batch_size : (step+1)*batch_size]		
-				batch_acc = sess.run(accuracy, feed_dict={X: batch_x, Y: batch_y, keep_prob: 1.0})
-				total_acc += batch_acc/(int(len(examples_val)/batch_size)*1.0)
-
-			print("Validation acc is: {}".format(total_acc))
+				print("Validation acc is: {}".format(total_acc))
 
 
 
