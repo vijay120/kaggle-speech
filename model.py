@@ -229,7 +229,7 @@ if __name__ == '__main__':
 		learning_rate = 0.001
 		num_steps = 500
 		display_step = 100
-		epochs = 1
+		epochs = 10
 
 		# Network Parameters
 		dropout = 0.75 # Dropout, probability to keep units
@@ -280,6 +280,7 @@ if __name__ == '__main__':
 							  "{:.3f}".format(acc) + " for epoch {}".format(i))
 
 						global_step += 1
+						print("Global step: {}".format(global_step))
 						saver.save(sess, '/data/kaggle_model/model_iter', global_step=global_step)
 
 				saver.save(sess, '/data/kaggle_model/model_final')
