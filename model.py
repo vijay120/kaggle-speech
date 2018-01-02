@@ -16,6 +16,9 @@ test_set_ques = ["yes", "no", "up", "down", "left", "right", "on", "off", "stop"
 extracted_classes = ['down', 'go', 'left', 'no', 'off', 'on', 'right', 'silence', 'stop',
        'unknown', 'up', 'yes']
 
+confusion_labels = ['bed', 'bird', 'cat', 'dog', 'down', 'eight', 'five', 'four', 'happy', 
+'house', 'left', 'marvin', 'nine', 'no', 'off', 'on', 'one', 'right', 'seven', 'sheila', 
+'six', 'stop', 'three', 'tree', 'two', 'up', 'wow', 'yes', 'zero', 'go', 'silence']
 
 def log_spectrogram(audio, sample_rate, window_size=20,
                  step_size=10, eps=1e-10):
@@ -365,6 +368,6 @@ if __name__ == '__main__':
 				print("total labels: {}".format(total_labels))
 				print("arg max: {}".format(total_arg_max_prediction))
 
-				print("Confusion matrix is:\n {}".format(confusion_matrix(total_labels, total_arg_max_prediction, test_set_ques)))
+				print("Confusion matrix is:\n {}".format(confusion_matrix(total_labels, total_arg_max_prediction, labels=confusion_labels)))
 
 				print("Validation acc is: {}".format(total_acc))
