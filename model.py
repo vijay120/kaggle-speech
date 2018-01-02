@@ -464,26 +464,26 @@ if __name__ == '__main__':
 
 
 
-		### do some predict time stuff
-		print("Predict time modelling")
-		predict_data = get_data_predict("/data/kaggle2/test/audio")
+			### do some predict time stuff
+			print("Predict time modelling")
+			predict_data = get_data_predict("/data/kaggle2/test/audio")
 
-		results = []
-		steps = int(len(predict_data)/batch_size)
-		for i in range(steps + 1):
-			start_index = i * batch_size
-			end_index = (i+1) * batch_size
-			labels = sess.run([arg_max_prediction], feed_dict={X: predict_data[start_index: end_index], keep_prob: 1.0, train_phase: False})
-			results += labels[0].tolist()
-		FIELD_NAMES = ["fname", "label"]
-		with open("out.csv", 'w+') as out:
-			writer = csv.DictWriter(out, delimiter=',', fieldnames=FIELD_NAMES)
-			writer.writeheader()
-			counter = 0
-			for file in listdir(predict_file):
-				label = classes_[results[counter]]
-				# if label not in test_set_ques:
-				# 	label = "unknown"
-				row = {'fname':file, 'label':label}
-				writer.writerow(row)
-				counter += 1
+			results = []
+			steps = int(len(predict_data)/batch_size)
+			for i in range(steps + 1):
+				start_index = i * batch_size
+				end_index = (i+1) * batch_size
+				labels = sess.run([arg_max_prediction], feed_dict={X: predict_data[start_index: end_index], keep_prob: 1.0, train_phase: False})
+				results += labels[0].tolist()
+			FIELD_NAMES = ["fname", "label"]
+			with open("out.csv", 'w+') as out:
+				writer = csv.DictWriter(out, delimiter=',', fieldnames=FIELD_NAMES)
+				writer.writeheader()
+				counter = 0
+				for file in listdir(predict_file):
+					label = classes_[results[counter]]
+					# if label not in test_set_ques:
+					# 	label = "unknown"
+					row = {'fname':file, 'label':label}
+					writer.writerow(row)
+					counter += 1
