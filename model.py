@@ -259,7 +259,7 @@ if __name__ == '__main__':
 			# 5x5 conv, 32 inputs, 64 outputs
 			'wc2': tf.Variable(tf.truncated_normal([6, 4, 94, 94], stddev=0.01), name='wc2'),
 			# fully connected, 7*7*64 inputs, 1024 outputs
-			'wd1': tf.Variable(tf.truncated_normal([32*32*94, 128], stddev=0.01), name='wd1'),
+			'wd1': tf.Variable(tf.truncated_normal([49*54*94, 128], stddev=0.01), name='wd1'),
 			# 1024 inputs, 10 outputs (class prediction)
 			'out': tf.Variable(tf.truncated_normal([128, num_classes], stddev=0.01), name='out')
 		}
