@@ -466,7 +466,8 @@ if __name__ == '__main__':
 
 			### do some predict time stuff
 			print("Predict time modelling")
-			predict_data = get_data_predict("/data/kaggle2/test/audio")
+			predict_file = "/data/kaggle2/test/audio"
+			predict_data = get_data_predict(predict_file)
 
 			results = []
 			steps = int(len(predict_data)/batch_size)
