@@ -53,12 +53,10 @@ def conv_net(x, weights, biases, dropout):
 
 	# Convolution Layer
 	conv1 = conv2d(x, weights['wc1'], biases['bc1'])
-	conv1 = tf.nn.relu(conv1)
 	conv1 = maxpool2d(conv1, 2, 3)
 
 	# Convolution Layer
 	conv2 = conv2d(conv1, weights['wc2'], biases['bc2'])
-	conv2 = tf.nn.relu(conv2)
 
 	print(conv2.get_shape())
 	
@@ -132,9 +130,10 @@ def get_data(dir, ques):
 		folder = que_dict[que]
 		for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
 			sample_rate, samples = wavfile.read(file)
-			_, _, spectrogram = log_spectrogram(samples, sample_rate)
-			# spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
-			X.append(spectrogram[:98])
+			#_, _, spectrogram = log_spectrogram(samples, sample_rate)
+			spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
+			#X.append(spectrogram[:98])
+			X.append(spectogram)
 			Y.append(lb.transform([que])[0])
 
 			# if len(X) > 1000:
@@ -162,8 +161,10 @@ def get_data_predict(folder):
 	counter = 0
 	for file in [os.path.join(folder, f) for f in listdir(folder)]:
 		sample_rate, samples = wavfile.read(file)
-		_, _, spectrogram = log_spectrogram(samples, sample_rate)
-		X.append(spectrogram)
+		#_, _, spectrogram = log_spectrogram(samples, sample_rate)
+		spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
+		#X.append(spectrogram[:98])
+		X.append(spectogram)
 		counter += 1
 		if counter%1000==0:
 			print(counter)
