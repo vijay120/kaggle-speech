@@ -358,8 +358,8 @@ if __name__ == '__main__':
 					print(batch_acc)
 					print(labels_np)
 					print(arg_max_prediction_np)
-					total_labels.append(list(labels_np))
-					total_arg_max_prediction.append(list(arg_max_prediction_np))
+					total_labels += labels_np
+					total_arg_max_prediction += arg_max_prediction_np
 					total_acc += batch_acc/(int(len(examples_val)/batch_size)*1.0)
 
 				print("total labels: {}".format(total_labels))
