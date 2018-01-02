@@ -21,7 +21,6 @@ confusion_labels = ['bed', 'bird', 'cat', 'dog', 'down', 'eight', 'five', 'four'
 'six', 'stop', 'three', 'tree', 'two', 'up', 'wow', 'yes', 'zero', 'go', 'silence']
 
 def batch_norm_wrapper(inputs, is_training, decay = 0.999):
-
     scale = tf.Variable(tf.ones([inputs.get_shape()[-1]]))
     beta = tf.Variable(tf.zeros([inputs.get_shape()[-1]]))
     pop_mean = tf.Variable(tf.zeros([inputs.get_shape()[-1]]), trainable=False)
@@ -73,9 +72,11 @@ def conv_net(x, weights, biases, dropout, trainable):
 	# 		lambda: tf.contrib.layers.batch_norm(x, decay=0.9, center=False, scale=True, updates_collections=None, is_training=True),
 	# 		lambda: tf.contrib.layers.batch_norm(x, decay=0.9, center=False, scale=True, updates_collections=None, is_training=False))
 
-	x = tf.cond(trainable,
-			lambda: batch_norm_wrapper(x,True,0.9),
-			lambda: batch_norm_wrapper(x,False,0.9))
+	# x = tf.cond(trainable,
+	# 		lambda: batch_norm_wrapper(x,True,0.9),
+	# 		lambda: batch_norm_wrapper(x,False,0.9))
+
+	x = batch_norm_wrapper(x, True, 0.9)
 
 	x = tf.reshape(x, shape=[-1, 64, 96, 1])
 
