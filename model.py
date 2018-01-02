@@ -37,15 +37,14 @@ def conv2d(x, W, b, strides=1):
 	# Conv2D wrapper, with bias and relu activation
 	x = tf.nn.conv2d(x, W, strides=[1, strides, strides, 1], padding='SAME')
 	x = tf.nn.bias_add(x, b)
-	return tf.nn.relu(x)
-
+	return x
 
 def maxpool2d(x, p, q):
 	# MaxPool2D wrapper
 	return tf.nn.max_pool(x, ksize=[1, p, q, 1], strides=[1, p, q, 1], padding='SAME')
 
 # Create model
-def conv_net(x, weights, biases, dropout, train_phase):
+def conv_net(x, weights, biases, dropout, trainable):
 	# MNIST data input is a 1-D vector of 784 features (28*28 pixels)
 	# Reshape to match picture format [Height x Width x Channel]
 	# Tensor input become 4-D: [Batch Size, Height, Width, Channel]
@@ -54,14 +53,19 @@ def conv_net(x, weights, biases, dropout, train_phase):
 
 	# Convolution Layer
 	conv1 = conv2d(x, weights['wc1'], biases['bc1'])
+	conv1 = tf.cond(trainable, 
+				lambda: tf.contrib.layers.batch_norm(conv1, decay=0.9, center=False, scale=True, updates_collections=None, is_training=True),
+				lambda: tf.contrib.layers.batch_norm(conv1, decay=0.9, center=False, scale=True, updates_collections=None, is_training=False))
+	conv1 = tf.nn.relu(conv1)
 	conv1 = maxpool2d(conv1, 2, 3)
-	# fc1 = tf.nn.dropout(fc1, dropout)
-
-	# conv1 = tf.contrib.layers.batch_norm(x, decay=0.9, center=False, scale=True, updates_collections=None, 
- #                         is_training=train_phase, scope=scope_bn)
+	#fc1 = tf.nn.dropout(fc1, dropout)
 
 	# Convolution Layer
 	conv2 = conv2d(conv1, weights['wc2'], biases['bc2'])
+	conv2 = tf.cond(trainable, 
+			lambda: tf.contrib.layers.batch_norm(conv2, decay=0.9, center=False, scale=True, updates_collections=None, is_training=True),
+			lambda: tf.contrib.layers.batch_norm(conv2, decay=0.9, center=False, scale=True, updates_collections=None, is_training=False))
+	conv2 = tf.nn.relu(conv2)
 
 	print(conv2.get_shape())
 	
@@ -204,6 +208,7 @@ if __name__ == '__main__':
 	#X = tf.placeholder(tf.float32, [None, 98, 161])
 	X = tf.placeholder(tf.float32, [None, 64, 96])
 	Y = tf.placeholder(tf.float32, [None, num_classes])
+	train_phase = tf.placeholder(tf.bool)
 	keep_prob = tf.placeholder(tf.float32) # dropout (keep probability)
 
 	if predict_file != "":
@@ -240,7 +245,7 @@ if __name__ == '__main__':
 			}
 
 			# Construct model
-			logits = conv_net(X, weights, biases, keep_prob, False)
+			logits = conv_net(X, weights, biases, keep_prob, train_phase)
 			prediction = tf.nn.softmax(logits)
 			arg_max_prediction = tf.argmax(prediction, 1)
 
@@ -250,7 +255,7 @@ if __name__ == '__main__':
 				start_index = i * batch_size
 				end_index = (i+1) * batch_size
 
-				labels = sess.run([arg_max_prediction], feed_dict={X: predict_data[start_index: end_index], keep_prob: 1.0})
+				labels = sess.run([arg_max_prediction], feed_dict={X: predict_data[start_index: end_index], keep_prob: 1.0, train_phase: False})
 				results += labels[0].tolist()
 
 			FIELD_NAMES = ["fname", "label"]
@@ -291,7 +296,7 @@ if __name__ == '__main__':
 		}
 
 		# Construct model
-		logits = conv_net(X, weights, biases, keep_prob, True)
+		logits = conv_net(X, weights, biases, keep_prob, train_phase)
 		prediction = tf.nn.softmax(logits)
 		arg_max_prediction = tf.argmax(prediction, 1)
 
@@ -348,7 +353,8 @@ if __name__ == '__main__':
 						# Calculate batch loss and accuracy
 						loss, acc = sess.run([loss_op, accuracy], feed_dict={X: batch_x,
 																			 Y: batch_y,
-																			 keep_prob: 1.0})
+																			 keep_prob: 1.0,
+																			 train_phase: True})
 						print("Step " + str(step) + ", Minibatch Loss= " + \
 							  "{:.4f}".format(loss) + ", Training Accuracy= " + \
 							  "{:.3f}".format(acc) + " for epoch {}".format(i))
@@ -365,7 +371,8 @@ if __name__ == '__main__':
 				for step in range(int(len(examples_val)/batch_size)):
 					batch_x = examples_val[step*batch_size : (step+1)*batch_size]
 					batch_y = labels_val[step*batch_size : (step+1)*batch_size]
-					batch_acc, labels_np, arg_max_prediction_np = sess.run([accuracy, labels_tf, arg_max_prediction], feed_dict={X: batch_x, Y: batch_y, keep_prob: 1.0})
+					batch_acc, labels_np, arg_max_prediction_np = sess.run([accuracy, labels_tf, arg_max_prediction], feed_dict={X: batch_x, 
+						Y: batch_y, keep_prob: 1.0, train_phase: False})
 					total_labels += list(labels_np)
 					total_arg_max_prediction += list(arg_max_prediction_np)
 					total_acc += batch_acc/(int(len(examples_val)/batch_size)*1.0)
