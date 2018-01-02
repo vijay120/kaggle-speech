@@ -134,7 +134,7 @@ def get_data(dir, ques):
 			X.append(spectrogram[:98])
 			Y.append(lb.transform([que])[0])
 
-			if len(X) > 100:
+			if len(X) > 1000:
 				break
 
 	examples = np.asarray(X)
@@ -353,6 +353,10 @@ if __name__ == '__main__':
 					batch_x = examples_val[step*batch_size : (step+1)*batch_size]
 					batch_y = labels_val[step*batch_size : (step+1)*batch_size]
 					batch_acc, labels_np, arg_max_prediction_np = sess.run([accuracy, labels_tf, arg_max_prediction], feed_dict={X: batch_x, Y: batch_y, keep_prob: 1.0})
+					print("inside batch")
+					print(batch_acc)
+					print(labels_np)
+					print(arg_max_prediction_np)
 					total_labels.append(list(labels_np))
 					total_arg_max_prediction.append(list(arg_max_prediction_np))
 					total_acc += batch_acc/(int(len(examples_val)/batch_size)*1.0)
