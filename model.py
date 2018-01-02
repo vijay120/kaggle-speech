@@ -104,13 +104,13 @@ def label_classes(dir, ques):
 	for folder in folders:
 		for que in ques:
 			if que in folder:
-				que_dict[que] = folder
-				# if que in test_set_ques:
-				# 	que_dict[que] = folder
-				# else:
-				# 	if "unknown" not in que_dict:
-				# 		que_dict["unknown"] = []
-				# 	que_dict["unknown"].append(folder)
+				#que_dict[que] = folder
+				if que in test_set_ques:
+					que_dict[que] = folder
+				else:
+					if "unknown" not in que_dict:
+						que_dict["unknown"] = []
+					que_dict["unknown"].append(folder)
 
 	lb.fit(list(que_dict.keys()))
 	return lb.classes_
@@ -126,13 +126,13 @@ def get_data(dir, ques):
 	for folder in folders:
 		for que in ques:
 			if que in folder:
-				que_dict[que] = folder
-				# if que in test_set_ques:
-				# 	que_dict[que] = folder
-				# else:
-				# 	if "unknown" not in que_dict:
-				# 		que_dict["unknown"] = []
-				# 	que_dict["unknown"].append(folder)
+				#que_dict[que] = folder
+				if que in test_set_ques:
+					que_dict[que] = folder
+				else:
+					if "unknown" not in que_dict:
+						que_dict["unknown"] = []
+					que_dict["unknown"].append(folder)
 
 	lb.fit(list(que_dict.keys()))
 
@@ -140,23 +140,23 @@ def get_data(dir, ques):
 	Y = []
 
 	for que in que_dict.keys():
-		# if que == "unknown":
-		# 	folders = que_dict[que]
+		if que == "unknown":
+			folders = que_dict[que]
 
-		# 	for folder in folders:
-		# 		for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
-		# 			spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
-		# 			X.append(spectogram)
-		# 			Y.append(lb.transform([que])[0])
-		# else:
-		folder = que_dict[que]
-		for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
-			sample_rate, samples = wavfile.read(file)
-			#_, _, spectrogram = log_spectrogram(samples, sample_rate)
-			spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
-			#X.append(spectrogram[:98])
-			X.append(spectogram)
-			Y.append(lb.transform([que])[0])
+			for folder in folders:
+				for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
+					spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
+					X.append(spectogram)
+					Y.append(lb.transform([que])[0])
+		else:
+			folder = que_dict[que]
+			for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
+				sample_rate, samples = wavfile.read(file)
+				#_, _, spectrogram = log_spectrogram(samples, sample_rate)
+				spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
+				#X.append(spectrogram[:98])
+				X.append(spectogram)
+				Y.append(lb.transform([que])[0])
 
 			# if len(X) > 1000:
 			# 	break
@@ -213,7 +213,7 @@ if __name__ == '__main__':
 
 	classes_ = label_classes(dir, ques)
 	print("Classes: {}".format(classes_))
-	batch_size = 50
+	batch_size = 16
 
 	# tf Graph input
 	#num_classes = len(test_set_ques) + 1
@@ -282,8 +282,8 @@ if __name__ == '__main__':
 				counter = 0
 				for file in listdir(predict_file):
 					label = classes_[results[counter]]
-					if label not in test_set_ques:
-						label = "unknown"
+					# if label not in test_set_ques:
+					# 	label = "unknown"
 					row = {'fname':file, 'label':label}
 					writer.writerow(row)
 					counter += 1
