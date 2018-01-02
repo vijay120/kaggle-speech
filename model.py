@@ -64,22 +64,22 @@ def conv_net(x, weights, biases, dropout, trainable):
 	# Convolution Layer
 	conv2 = conv2d(conv1, weights['wc2'], biases['bc2'])
 	conv2 = tf.nn.relu(conv2)
+	conv2 = maxpool2d(conv2, 2, 3)
 	conv2 = tf.nn.dropout(conv2, dropout)
-	#conv2 = maxpool2d(conv2, 2, 3)
 
 	print(conv2.get_shape())
 
 	# Convolution Layer
-	# conv3 = conv2d(conv2, weights['wc2'], biases['bc2'])
-	# conv3 = tf.cond(trainable, 
-	# 		lambda: tf.contrib.layers.batch_norm(conv3, decay=0.9, center=False, scale=True, updates_collections=None, is_training=True),
-	# 		lambda: tf.contrib.layers.batch_norm(conv3, decay=0.9, center=False, scale=True, updates_collections=None, is_training=False))
-	# conv3 = tf.nn.relu(conv3)
-	# conv3 = maxpool2d(conv3, 2, 3)
+	conv3 = conv2d(conv2, weights['wc3'], biases['bc3'])
+	conv3 = tf.nn.relu(conv3)
+	conv3 = maxpool2d(conv3, 2, 3)
+	conv3 = tf.nn.dropout(conv3, dropout)
+
+	print(conv3.get_shape())
 
 	# Fully connected layer
 	# Reshape conv2 output to fit fully connected layer input
-	fc1 = tf.reshape(conv2, [-1, weights['wd1'].get_shape().as_list()[0]])
+	fc1 = tf.reshape(conv3, [-1, weights['wd1'].get_shape().as_list()[0]])
 	fc1 = tf.add(tf.matmul(fc1, weights['wd1']), biases['bd1'])
 	fc1 = tf.nn.relu(fc1)
 
@@ -244,6 +244,7 @@ if __name__ == '__main__':
 				'wc1': graph.get_tensor_by_name("wc1:0"),
 				# 5x5 conv, 32 inputs, 64 outputs
 				'wc2': graph.get_tensor_by_name("wc2:0"),
+				'wc3': graph.get_tensor_by_name("wc3:0"),
 				# fully connected, 7*7*64 inputs, 1024 outputs
 				'wd1': graph.get_tensor_by_name("wd1:0"),
 				# 1024 inputs, 10 outputs (class prediction)
@@ -253,6 +254,7 @@ if __name__ == '__main__':
 			biases = {
 				'bc1': graph.get_tensor_by_name("bc1:0"),
 				'bc2': graph.get_tensor_by_name("bc2:0"),
+				'bc3': graph.get_tensor_by_name("bc3:0"),
 				'bd1': graph.get_tensor_by_name("bd1:0"),
 				'bout': graph.get_tensor_by_name("bout:0"),
 			}
@@ -294,7 +296,8 @@ if __name__ == '__main__':
 			# 5x5 conv, 1 input, 32 outputs
 			'wc1': tf.Variable(tf.truncated_normal([21, 8, 1, 94], stddev=0.01), name='wc1'),
 			# 5x5 conv, 32 inputs, 64 outputs
-			'wc2': tf.Variable(tf.truncated_normal([6, 4, 94, 94], stddev=0.01), name='wc2'),
+			'wc2': tf.Variable(tf.truncated_normal([15, 5, 94, 94], stddev=0.01), name='wc2'),
+			'wc3': tf.Variable(tf.truncated_normal([6, 4, 94, 94], stddev=0.01), name='wc3'),
 			# fully connected, 7*7*64 inputs, 1024 outputs
 			'wd1': tf.Variable(tf.truncated_normal([32*32*94, 128], stddev=0.01), name='wd1'),
 			# 1024 inputs, 10 outputs (class prediction)
@@ -304,6 +307,7 @@ if __name__ == '__main__':
 		biases = {
 			'bc1': tf.Variable(tf.zeros([94]), name='bc1'),
 			'bc2': tf.Variable(tf.zeros([94]), name='bc2'),
+			'bc3': tf.Variable(tf.zeros([94]), name='bc3'),
 			'bd1': tf.Variable(tf.zeros([128]), name='bd1'),
 			'bout': tf.Variable(tf.zeros([num_classes]), name='bout')
 		}
