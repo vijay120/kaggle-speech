@@ -158,8 +158,8 @@ def get_data(dir, ques):
 				X.append(spectogram)
 				Y.append(lb.transform([que])[0])
 
-			# if len(X) > 1000:
-			# 	break
+			if len(X) > 1000:
+				break
 
 	examples = np.asarray(X)
 	labels = np.asarray(Y)
@@ -190,6 +190,7 @@ def get_data_predict(folder):
 		counter += 1
 		if counter%1000==0:
 			print(counter)
+			break
 
 	return np.asarray(X)
 
@@ -340,7 +341,7 @@ if __name__ == '__main__':
 		correct_pred = tf.equal(arg_max_prediction, labels_tf)
 		accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
-		saver = tf.train.Saver()
+		saver = tf.train.Saver(tf.global_variables())
 		# Initialize the variables (i.e. assign their default value)
 		init = tf.global_variables_initializer()
 
