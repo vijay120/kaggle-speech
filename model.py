@@ -368,6 +368,6 @@ if __name__ == '__main__':
 				print("total labels: {}".format(total_labels))
 				print("arg max: {}".format(total_arg_max_prediction))
 
-				print("Confusion matrix is:\n {}".format(confusion_matrix(total_labels, total_arg_max_prediction, labels=confusion_labels)))
+				print("Confusion matrix is:\n {}".format(confusion_matrix(total_labels, total_arg_max_prediction)))
 
 				print("Validation acc is: {}".format(total_acc))
