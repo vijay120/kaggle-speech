@@ -357,17 +357,10 @@ if __name__ == '__main__':
 					batch_x = examples_val[step*batch_size : (step+1)*batch_size]
 					batch_y = labels_val[step*batch_size : (step+1)*batch_size]
 					batch_acc, labels_np, arg_max_prediction_np = sess.run([accuracy, labels_tf, arg_max_prediction], feed_dict={X: batch_x, Y: batch_y, keep_prob: 1.0})
-					print("inside batch")
-					print(batch_acc)
-					print(labels_np)
-					print(arg_max_prediction_np)
 					total_labels += list(labels_np)
 					total_arg_max_prediction += list(arg_max_prediction_np)
 					total_acc += batch_acc/(int(len(examples_val)/batch_size)*1.0)
-
-				print("total labels: {}".format(total_labels))
-				print("arg max: {}".format(total_arg_max_prediction))
-
-				print("Confusion matrix is:\n {}".format(confusion_matrix(total_labels, total_arg_max_prediction)))
+					
+				print("Confusion matrix is:\n {}".format(confusion_matrix(total_labels, total_arg_max_prediction)[0]))
 
 				print("Validation acc is: {}".format(total_acc))
