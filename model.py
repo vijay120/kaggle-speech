@@ -55,10 +55,10 @@ def conv_net(x, weights, biases, dropout, train_phase):
 	# Convolution Layer
 	conv1 = conv2d(x, weights['wc1'], biases['bc1'])
 	conv1 = maxpool2d(conv1, 2, 3)
-	fc1 = tf.nn.dropout(fc1, dropout)
+	# fc1 = tf.nn.dropout(fc1, dropout)
 
-	conv1 = tf.contrib.layers.batch_norm(x, decay=0.9, center=False, scale=True, updates_collections=None, 
-                         is_training=train_phase, scope=scope_bn)
+	# conv1 = tf.contrib.layers.batch_norm(x, decay=0.9, center=False, scale=True, updates_collections=None, 
+ #                         is_training=train_phase, scope=scope_bn)
 
 	# Convolution Layer
 	conv2 = conv2d(conv1, weights['wc2'], biases['bc2'])
