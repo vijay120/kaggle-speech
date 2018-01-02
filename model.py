@@ -129,7 +129,7 @@ def get_data(dir, ques):
 			sample_rate, samples = wavfile.read(file)
 			_, _, spectrogram = log_spectrogram(samples, sample_rate)
 			# spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
-			X.append(spectrogram)
+			X.append(spectrogram[:98])
 			Y.append(lb.transform([que])[0])
 
 	examples = np.asarray(X)
