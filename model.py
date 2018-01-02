@@ -9,10 +9,23 @@ import numpy as np
 import tensorflow as tf
 import vggish_input
 import csv
+from scipy import signal
 
 test_set_ques = ["yes", "no", "up", "down", "left", "right", "on", "off", "stop", "go", "silence"]
 extracted_classes = ['down', 'go', 'left', 'no', 'off', 'on', 'right', 'silence', 'stop',
        'unknown', 'up', 'yes']
+
+def log_spectrogram(audio, sample_rate, window_size=20,
+                 step_size=10, eps=1e-10):
+    nperseg = int(round(window_size * sample_rate / 1e3))
+    noverlap = int(round(step_size * sample_rate / 1e3))
+    freqs, times, spec = signal.spectrogram(audio,
+                                    fs=sample_rate,
+                                    window='hann',
+                                    nperseg=nperseg,
+                                    noverlap=noverlap,
+                                    detrend=False)
+    return freqs, times, np.log(spec.T.astype(np.float32) + eps)
 
 # Create some wrappers for simplicity
 def conv2d(x, W, b, strides=1):
@@ -35,14 +48,19 @@ def conv_net(x, weights, biases, dropout):
 
 	# Convolution Layer
 	conv1 = conv2d(x, weights['wc1'], biases['bc1'])
-	# Max Pooling (down-sampling)
 	conv1 = tf.nn.relu(conv1)
-	conv1 = maxpool2d(conv1, 2, 3)
+	conv1 = maxpool2d(conv1, 2, 2)
 
 	# Convolution Layer
-	conv2 = conv2d(conv1, weights['wc2'], biases['bc2'])
-	# Max Pooling (down-sampling)
+	conv2 = conv2d(conv1, weights['wc1'], biases['bc1'])
 	conv2 = tf.nn.relu(conv2)
+	conv2 = maxpool2d(conv2, 2, 2)
+
+
+	conv2 = conv2d(conv1, weights['wc2'], biases['bc2'])
+	conv2 = tf.nn.relu(conv2)
+
+
 	print(conv2.get_shape())
 	
 	# Fully connected layer
@@ -114,8 +132,10 @@ def get_data(dir, ques):
 		# else:
 		folder = que_dict[que]
 		for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
-			spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
-			X.append(spectogram)
+			sample_rate, samples = wavfile.read(file)
+			_, _, spectrogram = log_spectrogram(samples, sample_rate)
+			# spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
+			X.append(spectrogram)
 			Y.append(lb.transform([que])[0])
 
 	examples = np.asarray(X)
@@ -139,8 +159,9 @@ def get_data_predict(folder):
 
 	counter = 0
 	for file in [os.path.join(folder, f) for f in listdir(folder)]:
-		spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
-		X.append(spectogram)
+		sample_rate, samples = wavfile.read(file)
+		_, _, spectrogram = log_spectrogram(samples, sample_rate)
+		X.append(spectrogram)
 		counter += 1
 		if counter%1000==0:
 			print(counter)
@@ -261,7 +282,6 @@ if __name__ == '__main__':
 		prediction = tf.nn.softmax(logits)
 		arg_max_prediction = tf.argmax(prediction, 1)
 
-
 		print("Training time modelling")
 		examples_train, labels_train, examples_val, labels_val = get_data(dir, ques)
 
@@ -313,14 +333,12 @@ if __name__ == '__main__':
 					sess.run(train_op, feed_dict={X: batch_x, Y: batch_y, keep_prob: dropout})
 					if step % display_step == 0 or step == 1:
 						# Calculate batch loss and accuracy
-						loss, acc, confusion = sess.run([loss_op, accuracy, confusion_matrix], feed_dict={X: batch_x,
+						loss, acc = sess.run([loss_op, accuracy], feed_dict={X: batch_x,
 																			 Y: batch_y,
 																			 keep_prob: 1.0})
 						print("Step " + str(step) + ", Minibatch Loss= " + \
 							  "{:.4f}".format(loss) + ", Training Accuracy= " + \
 							  "{:.3f}".format(acc) + " for epoch {}".format(i))
-
-						print("Confusion matrix is:\n {}".format(confusion))
 
 						global_step += 1
 						print("Global step: {}".format(global_step))
@@ -329,10 +347,18 @@ if __name__ == '__main__':
 				saver.save(sess, '/data/kaggle_model_2/model_final')
 
 				total_acc = 0
+				total_confusion = None
 				for step in range(int(len(examples_val)/batch_size)):
 					batch_x = examples_val[step*batch_size : (step+1)*batch_size]
 					batch_y = labels_val[step*batch_size : (step+1)*batch_size]		
-					batch_acc = sess.run(accuracy, feed_dict={X: batch_x, Y: batch_y, keep_prob: 1.0})
+					batch_acc, batch_confusion = sess.run([accuracy, confusion], feed_dict={X: batch_x, Y: batch_y, keep_prob: 1.0})
 					total_acc += batch_acc/(int(len(examples_val)/batch_size)*1.0)
+
+					if step == 0:
+						total_confusion = batch_confusion
+					else:
+						total_confusion += batch_confusion
+
+				print("Confusion matrix is:\n {}".format(confusion))
 
 				print("Validation acc is: {}".format(total_acc))
