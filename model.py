@@ -10,10 +10,12 @@ import tensorflow as tf
 import vggish_input
 import csv
 from scipy import signal
+from sklearn.metrics import confusion_matrix
 
 test_set_ques = ["yes", "no", "up", "down", "left", "right", "on", "off", "stop", "go", "silence"]
 extracted_classes = ['down', 'go', 'left', 'no', 'off', 'on', 'right', 'silence', 'stop',
        'unknown', 'up', 'yes']
+
 
 def log_spectrogram(audio, sample_rate, window_size=20,
                  step_size=10, eps=1e-10):
@@ -132,6 +134,9 @@ def get_data(dir, ques):
 			X.append(spectrogram[:98])
 			Y.append(lb.transform([que])[0])
 
+			if len(X) > 100:
+				break
+
 	examples = np.asarray(X)
 	labels = np.asarray(Y)
 	indices = np.arange(len(examples))
@@ -171,12 +176,14 @@ if __name__ == '__main__':
 	parser.add_argument('q', help='A comma separated list of ques')
 	parser.add_argument('dir', help='The directory containing the files')
 	parser.add_argument('p', help='Predict time workflow')
+	parser.add_argument('s', help='Save model dir')
 
 	args = parser.parse_args()
 
 	ques = set(args.q.split(','))
 	dir = args.dir
 	predict_file = args.p
+	saved_model_dir = args.s
 
 	classes_ = label_classes(dir, ques)
 	print("Classes: {}".format(classes_))
@@ -191,13 +198,13 @@ if __name__ == '__main__':
 
 	if predict_file != "":
 		print("Predict time modelling")
-		imported_meta = tf.train.import_meta_graph("/data/kaggle_model_2/model_final.meta") 
+		imported_meta = tf.train.import_meta_graph("{}model_final.meta".format(saved_model_dir)) 
 		predict_data = get_data_predict(predict_file)
 		#init = tf.global_variables_initializer()
 
 		with tf.Session() as sess:
 			#sess.run(init)
-			last_checkpoint = tf.train.latest_checkpoint('/data/kaggle_model_2/')
+			last_checkpoint = tf.train.latest_checkpoint(saved_model_dir)
 			print("Loading checkpoint: {}".format(last_checkpoint))
 			imported_meta.restore(sess, last_checkpoint)
 
@@ -294,9 +301,10 @@ if __name__ == '__main__':
 		train_op = optimizer.minimize(loss_op)
 
 		# Evaluate model
-		correct_pred = tf.equal(arg_max_prediction, tf.argmax(Y, 1))
+		labels_tf = tf.argmax(Y, 1)
+		correct_pred = tf.equal(arg_max_prediction, labels_tf)
 		accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
-		confusion_matrix = tf.contrib.metrics.confusion_matrix(tf.argmax(Y, 1), arg_max_prediction)
+		confusion_matrix = tf.contrib.metrics.confusion_matrix(labels_tf, arg_max_prediction)
 
 		saver = tf.train.Saver()
 		# Initialize the variables (i.e. assign their default value)
@@ -336,18 +344,20 @@ if __name__ == '__main__':
 
 						global_step += 1
 						print("Global step: {}".format(global_step))
-						saver.save(sess, '/data/kaggle_model_2/model_iter', global_step=global_step)
+						saver.save(sess, '{}model_iter'.format(saved_model_dir), global_step=global_step)
 
-				saver.save(sess, '/data/kaggle_model_2/model_final')
+				saver.save(sess, '{}model_final'.format(saved_model_dir))
 
-				total_acc = 0
+				total_labels = []
+				total_arg_max_prediction = []
 				for step in range(int(len(examples_val)/batch_size)):
 					batch_x = examples_val[step*batch_size : (step+1)*batch_size]
 					batch_y = labels_val[step*batch_size : (step+1)*batch_size]
-					batch_acc, batch_confusion = sess.run([accuracy, confusion_matrix], feed_dict={X: batch_x, Y: batch_y, keep_prob: 1.0})
-					print(batch_confusion)
+					batch_acc, labels_np, arg_max_prediction_np = sess.run([accuracy, labels_tf, arg_max_prediction], feed_dict={X: batch_x, Y: batch_y, keep_prob: 1.0})
+					total_labels.append(list(labels_np))
+					total_arg_max_prediction.append(list(arg_max_prediction_np))
 					total_acc += batch_acc/(int(len(examples_val)/batch_size)*1.0)
 
-				print("Confusion matrix is:\n {}".format(confusion))
+				print("Confusion matrix is:\n {}".format(confusion_matrix(total_labels, total_arg_max_prediction, test_set_ques)))
 
 				print("Validation acc is: {}".format(total_acc))
