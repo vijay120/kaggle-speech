@@ -66,12 +66,21 @@ def conv_net(x, weights, biases, dropout, trainable):
 			lambda: tf.contrib.layers.batch_norm(conv2, decay=0.9, center=False, scale=True, updates_collections=None, is_training=True),
 			lambda: tf.contrib.layers.batch_norm(conv2, decay=0.9, center=False, scale=True, updates_collections=None, is_training=False))
 	conv2 = tf.nn.relu(conv2)
+	conv2 = maxpool2d(conv2, 2, 3)
 
 	print(conv2.get_shape())
-	
+
+	# Convolution Layer
+	conv3 = conv2d(conv2, weights['wc2'], biases['bc2'])
+	conv3 = tf.cond(trainable, 
+			lambda: tf.contrib.layers.batch_norm(conv3, decay=0.9, center=False, scale=True, updates_collections=None, is_training=True),
+			lambda: tf.contrib.layers.batch_norm(conv3, decay=0.9, center=False, scale=True, updates_collections=None, is_training=False))
+	conv3 = tf.nn.relu(conv3)
+	conv3 = maxpool2d(conv3, 2, 3)
+
 	# Fully connected layer
 	# Reshape conv2 output to fit fully connected layer input
-	fc1 = tf.reshape(conv2, [-1, weights['wd1'].get_shape().as_list()[0]])
+	fc1 = tf.reshape(conv3, [-1, weights['wd1'].get_shape().as_list()[0]])
 	fc1 = tf.add(tf.matmul(fc1, weights['wd1']), biases['bd1'])
 	fc1 = tf.nn.relu(fc1)
 	# Apply Dropout
@@ -145,8 +154,8 @@ def get_data(dir, ques):
 			X.append(spectogram)
 			Y.append(lb.transform([que])[0])
 
-			# if len(X) > 1000:
-			# 	break
+			if len(X) > 1000:
+				break
 
 	examples = np.asarray(X)
 	labels = np.asarray(Y)
@@ -348,7 +357,7 @@ if __name__ == '__main__':
 						break
 							
 					# Run optimization op (backprop)
-					sess.run(train_op, feed_dict={X: batch_x, Y: batch_y, keep_prob: dropout})
+					sess.run(train_op, feed_dict={X: batch_x, Y: batch_y, keep_prob: dropout, train_phase: True})
 					if step % display_step == 0 or step == 1:
 						# Calculate batch loss and accuracy
 						loss, acc = sess.run([loss_op, accuracy], feed_dict={X: batch_x,
