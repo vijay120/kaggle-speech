@@ -304,7 +304,6 @@ if __name__ == '__main__':
 		labels_tf = tf.argmax(Y, 1)
 		correct_pred = tf.equal(arg_max_prediction, labels_tf)
 		accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
-		confusion_matrix = tf.contrib.metrics.confusion_matrix(labels_tf, arg_max_prediction)
 
 		saver = tf.train.Saver()
 		# Initialize the variables (i.e. assign their default value)
