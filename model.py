@@ -349,6 +349,7 @@ if __name__ == '__main__':
 
 				total_labels = []
 				total_arg_max_prediction = []
+				total_acc = 0
 				for step in range(int(len(examples_val)/batch_size)):
 					batch_x = examples_val[step*batch_size : (step+1)*batch_size]
 					batch_y = labels_val[step*batch_size : (step+1)*batch_size]
