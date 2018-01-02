@@ -220,8 +220,8 @@ def get_data(dir, ques):
 				X.append(spectogram)
 				Y.append(lb.transform([que])[0])
 
-			if len(X) > 1000:
-				break
+			# if len(X) > 1000:
+			# 	break
 
 	examples = np.asarray(X)
 	labels = np.asarray(Y)
@@ -252,7 +252,7 @@ def get_data_predict(folder):
 		counter += 1
 		if counter%1000==0:
 			print(counter)
-			break
+			#break
 
 	return np.asarray(X)
 
