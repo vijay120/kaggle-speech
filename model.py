@@ -49,17 +49,11 @@ def conv_net(x, weights, biases, dropout):
 	# Convolution Layer
 	conv1 = conv2d(x, weights['wc1'], biases['bc1'])
 	conv1 = tf.nn.relu(conv1)
-	conv1 = maxpool2d(conv1, 2, 2)
+	conv1 = maxpool2d(conv1, 2, 3)
 
 	# Convolution Layer
-	conv2 = conv2d(conv1, weights['wc1'], biases['bc1'])
-	conv2 = tf.nn.relu(conv2)
-	conv2 = maxpool2d(conv2, 2, 2)
-
-
 	conv2 = conv2d(conv1, weights['wc2'], biases['bc2'])
 	conv2 = tf.nn.relu(conv2)
-
 
 	print(conv2.get_shape())
 	
