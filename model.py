@@ -289,7 +289,7 @@ if __name__ == '__main__':
 		learning_rate = 0.001
 		num_steps = 500
 		display_step = 100
-		epochs = 50
+		epochs = 10
 
 		# Network Parameters
 		dropout = 0.5 # Dropout, probability to keep units
