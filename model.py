@@ -44,7 +44,7 @@ def conv_net(x, weights, biases, dropout):
 	# MNIST data input is a 1-D vector of 784 features (28*28 pixels)
 	# Reshape to match picture format [Height x Width x Channel]
 	# Tensor input become 4-D: [Batch Size, Height, Width, Channel]
-	x = tf.reshape(x, shape=[-1, 99, 161, 1])
+	x = tf.reshape(x, shape=[-1, 98, 161, 1])
 
 	# Convolution Layer
 	conv1 = conv2d(x, weights['wc1'], biases['bc1'])
@@ -187,7 +187,7 @@ if __name__ == '__main__':
 	# tf Graph input
 	#num_classes = len(test_set_ques) + 1
 	num_classes = len(ques)
-	X = tf.placeholder(tf.float32, [None, 99, 161])
+	X = tf.placeholder(tf.float32, [None, 98, 161])
 	Y = tf.placeholder(tf.float32, [None, num_classes])
 	keep_prob = tf.placeholder(tf.float32) # dropout (keep probability)
 
