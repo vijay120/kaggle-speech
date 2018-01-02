@@ -216,8 +216,9 @@ if __name__ == '__main__':
 	batch_size = 16
 
 	# tf Graph input
-	#num_classes = len(test_set_ques) + 1
-	num_classes = len(ques)
+	num_classes = len(test_set_ques) + 1
+	
+	#num_classes = len(ques)
 	#X = tf.placeholder(tf.float32, [None, 98, 161])
 	X = tf.placeholder(tf.float32, [None, 64, 96])
 	Y = tf.placeholder(tf.float32, [None, num_classes])
