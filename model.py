@@ -20,24 +20,56 @@ confusion_labels = ['bed', 'bird', 'cat', 'dog', 'down', 'eight', 'five', 'four'
 'house', 'left', 'marvin', 'nine', 'no', 'off', 'on', 'one', 'right', 'seven', 'sheila', 
 'six', 'stop', 'three', 'tree', 'two', 'up', 'wow', 'yes', 'zero', 'go', 'silence']
 
-def batch_norm_wrapper(inputs, is_training, decay = 0.999):
-    scale = tf.Variable(tf.ones([inputs.get_shape()[-1]]))
-    beta = tf.Variable(tf.zeros([inputs.get_shape()[-1]]))
-    pop_mean = tf.Variable(tf.zeros([inputs.get_shape()[-1]]), trainable=False)
-    pop_var = tf.Variable(tf.ones([inputs.get_shape()[-1]]), trainable=False)
+def batch_norm(x,
+               phase,
+               shift=True,
+               scale=True,
+               momentum=0.99,
+               eps=1e-3,
+               internal_update=False,
+               scope=None,
+               reuse=None):
 
-    if is_training:
-        batch_mean, batch_var = tf.nn.moments(inputs,[0])
-        train_mean = tf.assign(pop_mean,
-                               pop_mean * decay + batch_mean * (1 - decay))
-        train_var = tf.assign(pop_var,
-                              pop_var * decay + batch_var * (1 - decay))
-        with tf.control_dependencies([train_mean, train_var]):
-            return tf.nn.batch_normalization(inputs,
-                batch_mean, batch_var, beta, scale, epsilon)
-    else:
-        return tf.nn.batch_normalization(inputs,
-            pop_mean, pop_var, beta, scale, epsilon)
+    C = x._shape_as_list()[-1]
+    ndim = len(x.shape)
+    var_shape = [1] * (ndim - 1) + [C]
+
+    with tf.variable_scope(scope, 'batch_norm', reuse=reuse):
+        def training():
+            m, v = tf.nn.moments(x, range(ndim - 1), keep_dims=True)
+            update_m = _assign_moving_average(moving_m, m, momentum, 'update_mean')
+            update_v = _assign_moving_average(moving_v, v, momentum, 'update_var')
+            tf.add_to_collection('update_ops', update_m)
+            tf.add_to_collection('update_ops', update_v)
+
+            if internal_update:
+                with tf.control_dependencies([update_m, update_v]):
+                    output = (x - m) * tf.rsqrt(v + eps)
+            else:
+                output = (x - m) * tf.rsqrt(v + eps)
+            return output
+
+        def testing():
+            m, v = moving_m, moving_v
+            output = (x - m) * tf.rsqrt(v + eps)
+            return output
+
+        # Get mean and variance, normalize input
+        moving_m = tf.get_variable('mean', var_shape, initializer=tf.zeros_initializer, trainable=False)
+        moving_v = tf.get_variable('var', var_shape, initializer=tf.ones_initializer, trainable=False)
+
+        if isinstance(phase, bool):
+            output = training() if phase else testing()
+        else:
+            output = tf.cond(phase, training, testing)
+
+        if scale:
+            output *= tf.get_variable('gamma', var_shape, initializer=tf.ones_initializer)
+
+        if shift:
+            output += tf.get_variable('beta', var_shape, initializer=tf.zeros_initializer)
+
+    return output
 
 def log_spectrogram(audio, sample_rate, window_size=20,
                  step_size=10, eps=1e-10):
@@ -68,15 +100,15 @@ def conv_net(x, weights, biases, dropout, trainable):
 	# Reshape to match picture format [Height x Width x Channel]
 	# Tensor input become 4-D: [Batch Size, Height, Width, Channel]
 	#x = tf.reshape(x, shape=[-1, 98, 161, 1])
-	# x = tf.cond(trainable,
-	# 		lambda: tf.contrib.layers.batch_norm(x, decay=0.9, center=False, scale=True, updates_collections=None, is_training=True),
-	# 		lambda: tf.contrib.layers.batch_norm(x, decay=0.9, center=False, scale=True, updates_collections=None, is_training=False))
+	x = tf.cond(trainable,
+			lambda: tf.contrib.layers.batch_norm(x, decay=0.9, center=False, scale=True, updates_collections=None, is_training=True),
+			lambda: tf.contrib.layers.batch_norm(x, decay=0.9, center=False, scale=True, updates_collections=None, is_training=False))
 
 	# x = tf.cond(trainable,
 	# 		lambda: batch_norm_wrapper(x,True,0.9),
 	# 		lambda: batch_norm_wrapper(x,False,0.9))
 
-	x = batch_norm_wrapper(x, True, 0.9)
+	#x = batch_norm_wrapper(x, True, 0.9)
 
 	x = tf.reshape(x, shape=[-1, 64, 96, 1])
 
@@ -109,13 +141,13 @@ def conv_net(x, weights, biases, dropout, trainable):
 	fc1 = tf.add(tf.matmul(fc1, weights['wd1']), biases['bd1'])
 	fc1 = tf.nn.relu(fc1)
 
-	# fc1 = tf.cond(trainable,
-	# 		lambda: tf.contrib.layers.batch_norm(fc1, decay=0.9, center=False, scale=True, updates_collections=None, is_training=True),
-	# 		lambda: tf.contrib.layers.batch_norm(fc1, decay=0.9, center=False, scale=True, updates_collections=None, is_training=False))
-
 	fc1 = tf.cond(trainable,
-			lambda: batch_norm_wrapper(fc1,True,0.9),
-			lambda: batch_norm_wrapper(fc1,False,0.9))
+			lambda: tf.contrib.layers.batch_norm(fc1, decay=0.9, center=False, scale=True, updates_collections=None, is_training=True),
+			lambda: tf.contrib.layers.batch_norm(fc1, decay=0.9, center=False, scale=True, updates_collections=None, is_training=False))
+
+	# fc1 = tf.cond(trainable,
+	# 		lambda: batch_norm_wrapper(fc1,True,0.9),
+	# 		lambda: batch_norm_wrapper(fc1,False,0.9))
 
 	# Apply Dropout
 	# fc1 = tf.nn.dropout(fc1, dropout)
@@ -429,3 +461,29 @@ if __name__ == '__main__':
 				print("Confusion matrix is:\n {}".format(confusion_matrix(total_labels, total_arg_max_prediction)))
 
 				print("Validation acc is: {}".format(total_acc))
+
+
+
+		### do some predict time stuff
+		print("Predict time modelling")
+		predict_data = get_data_predict(predict_file)
+
+		results = []
+		steps = int(len(predict_data)/batch_size)
+		for i in range(steps + 1):
+			start_index = i * batch_size
+			end_index = (i+1) * batch_size
+			labels = sess.run([arg_max_prediction], feed_dict={X: predict_data[start_index: end_index], keep_prob: 1.0, train_phase: False})
+			results += labels[0].tolist()
+		FIELD_NAMES = ["fname", "label"]
+		with open("out.csv", 'w+') as out:
+			writer = csv.DictWriter(out, delimiter=',', fieldnames=FIELD_NAMES)
+			writer.writeheader()
+			counter = 0
+			for file in listdir(predict_file):
+				label = classes_[results[counter]]
+				# if label not in test_set_ques:
+				# 	label = "unknown"
+				row = {'fname':file, 'label':label}
+				writer.writerow(row)
+				counter += 1
