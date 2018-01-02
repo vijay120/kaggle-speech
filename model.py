@@ -49,7 +49,7 @@ def conv_net(x, weights, biases, dropout, trainable):
 	# Reshape to match picture format [Height x Width x Channel]
 	# Tensor input become 4-D: [Batch Size, Height, Width, Channel]
 	#x = tf.reshape(x, shape=[-1, 98, 161, 1])
-	x = tf.cond(x,
+	x = tf.cond(trainable,
 			lambda: tf.contrib.layers.batch_norm(x, decay=0.9, center=False, scale=True, updates_collections=None, is_training=True),
 			lambda: tf.contrib.layers.batch_norm(x, decay=0.9, center=False, scale=True, updates_collections=None, is_training=False))
 	x = tf.reshape(x, shape=[-1, 64, 96, 1])
@@ -83,7 +83,7 @@ def conv_net(x, weights, biases, dropout, trainable):
 	fc1 = tf.add(tf.matmul(fc1, weights['wd1']), biases['bd1'])
 	fc1 = tf.nn.relu(fc1)
 
-	fc1 = tf.cond(fc1,
+	fc1 = tf.cond(trainable,
 			lambda: tf.contrib.layers.batch_norm(fc1, decay=0.9, center=False, scale=True, updates_collections=None, is_training=True),
 			lambda: tf.contrib.layers.batch_norm(fc1, decay=0.9, center=False, scale=True, updates_collections=None, is_training=False))
 
