@@ -45,15 +45,20 @@ def maxpool2d(x, p, q):
 	return tf.nn.max_pool(x, ksize=[1, p, q, 1], strides=[1, p, q, 1], padding='SAME')
 
 # Create model
-def conv_net(x, weights, biases, dropout):
+def conv_net(x, weights, biases, dropout, train_phase):
 	# MNIST data input is a 1-D vector of 784 features (28*28 pixels)
 	# Reshape to match picture format [Height x Width x Channel]
 	# Tensor input become 4-D: [Batch Size, Height, Width, Channel]
-	x = tf.reshape(x, shape=[-1, 98, 161, 1])
+	#x = tf.reshape(x, shape=[-1, 98, 161, 1])
+	x = tf.reshape(x, shape=[-1, 64, 96, 1])
 
 	# Convolution Layer
 	conv1 = conv2d(x, weights['wc1'], biases['bc1'])
 	conv1 = maxpool2d(conv1, 2, 3)
+	fc1 = tf.nn.dropout(fc1, dropout)
+
+	conv1 = tf.contrib.layers.batch_norm(x, decay=0.9, center=False, scale=True, updates_collections=None, 
+                         is_training=train_phase, scope=scope_bn)
 
 	# Convolution Layer
 	conv2 = conv2d(conv1, weights['wc2'], biases['bc2'])
@@ -196,7 +201,8 @@ if __name__ == '__main__':
 	# tf Graph input
 	#num_classes = len(test_set_ques) + 1
 	num_classes = len(ques)
-	X = tf.placeholder(tf.float32, [None, 98, 161])
+	#X = tf.placeholder(tf.float32, [None, 98, 161])
+	X = tf.placeholder(tf.float32, [None, 64, 96])
 	Y = tf.placeholder(tf.float32, [None, num_classes])
 	keep_prob = tf.placeholder(tf.float32) # dropout (keep probability)
 
@@ -234,7 +240,7 @@ if __name__ == '__main__':
 			}
 
 			# Construct model
-			logits = conv_net(X, weights, biases, keep_prob)
+			logits = conv_net(X, weights, biases, keep_prob, False)
 			prediction = tf.nn.softmax(logits)
 			arg_max_prediction = tf.argmax(prediction, 1)
 
@@ -262,6 +268,8 @@ if __name__ == '__main__':
 					writer.writerow(row)
 					counter += 1
 
+	#wd1': tf.Variable(tf.truncated_normal([49*54*94, 128], stddev=0.01), name='wd1'),
+
 	else:
 		# Store layers weight & bias
 		weights = {
@@ -270,7 +278,7 @@ if __name__ == '__main__':
 			# 5x5 conv, 32 inputs, 64 outputs
 			'wc2': tf.Variable(tf.truncated_normal([6, 4, 94, 94], stddev=0.01), name='wc2'),
 			# fully connected, 7*7*64 inputs, 1024 outputs
-			'wd1': tf.Variable(tf.truncated_normal([49*54*94, 128], stddev=0.01), name='wd1'),
+			'wd1': tf.Variable(tf.truncated_normal([32*32*94, 128], stddev=0.01), name='wd1'),
 			# 1024 inputs, 10 outputs (class prediction)
 			'out': tf.Variable(tf.truncated_normal([128, num_classes], stddev=0.01), name='out')
 		}
@@ -283,7 +291,7 @@ if __name__ == '__main__':
 		}
 
 		# Construct model
-		logits = conv_net(X, weights, biases, keep_prob)
+		logits = conv_net(X, weights, biases, keep_prob, True)
 		prediction = tf.nn.softmax(logits)
 		arg_max_prediction = tf.argmax(prediction, 1)
 
