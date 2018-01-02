@@ -49,23 +49,22 @@ def conv_net(x, weights, biases, dropout, trainable):
 	# Reshape to match picture format [Height x Width x Channel]
 	# Tensor input become 4-D: [Batch Size, Height, Width, Channel]
 	#x = tf.reshape(x, shape=[-1, 98, 161, 1])
+	x = tf.cond(x,
+			lambda: tf.contrib.layers.batch_norm(x, decay=0.9, center=False, scale=True, updates_collections=None, is_training=True),
+			lambda: tf.contrib.layers.batch_norm(x, decay=0.9, center=False, scale=True, updates_collections=None, is_training=False))
 	x = tf.reshape(x, shape=[-1, 64, 96, 1])
 
 	# Convolution Layer
 	conv1 = conv2d(x, weights['wc1'], biases['bc1'])
-	conv1 = tf.cond(trainable, 
-				lambda: tf.contrib.layers.batch_norm(conv1, decay=0.9, center=False, scale=True, updates_collections=None, is_training=True),
-				lambda: tf.contrib.layers.batch_norm(conv1, decay=0.9, center=False, scale=True, updates_collections=None, is_training=False))
 	conv1 = tf.nn.relu(conv1)
 	conv1 = maxpool2d(conv1, 2, 3)
+	conv1 = tf.nn.dropout(conv1, dropout)
 	#fc1 = tf.nn.dropout(fc1, dropout)
 
 	# Convolution Layer
 	conv2 = conv2d(conv1, weights['wc2'], biases['bc2'])
-	conv2 = tf.cond(trainable, 
-			lambda: tf.contrib.layers.batch_norm(conv2, decay=0.9, center=False, scale=True, updates_collections=None, is_training=True),
-			lambda: tf.contrib.layers.batch_norm(conv2, decay=0.9, center=False, scale=True, updates_collections=None, is_training=False))
 	conv2 = tf.nn.relu(conv2)
+	conv2 = tf.nn.dropout(conv2, dropout)
 	#conv2 = maxpool2d(conv2, 2, 3)
 
 	print(conv2.get_shape())
@@ -83,8 +82,13 @@ def conv_net(x, weights, biases, dropout, trainable):
 	fc1 = tf.reshape(conv2, [-1, weights['wd1'].get_shape().as_list()[0]])
 	fc1 = tf.add(tf.matmul(fc1, weights['wd1']), biases['bd1'])
 	fc1 = tf.nn.relu(fc1)
+
+	fc1 = tf.cond(fc1,
+			lambda: tf.contrib.layers.batch_norm(fc1, decay=0.9, center=False, scale=True, updates_collections=None, is_training=True),
+			lambda: tf.contrib.layers.batch_norm(fc1, decay=0.9, center=False, scale=True, updates_collections=None, is_training=False))
+
 	# Apply Dropout
-	fc1 = tf.nn.dropout(fc1, dropout)
+	# fc1 = tf.nn.dropout(fc1, dropout)
 
 	# Output, class prediction
 	out = tf.add(tf.matmul(fc1, weights['out']), biases['bout'])
