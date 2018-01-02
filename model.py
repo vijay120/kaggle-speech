@@ -20,6 +20,26 @@ confusion_labels = ['bed', 'bird', 'cat', 'dog', 'down', 'eight', 'five', 'four'
 'house', 'left', 'marvin', 'nine', 'no', 'off', 'on', 'one', 'right', 'seven', 'sheila', 
 'six', 'stop', 'three', 'tree', 'two', 'up', 'wow', 'yes', 'zero', 'go', 'silence']
 
+def batch_norm_wrapper(inputs, is_training, decay = 0.999):
+
+    scale = tf.Variable(tf.ones([inputs.get_shape()[-1]]))
+    beta = tf.Variable(tf.zeros([inputs.get_shape()[-1]]))
+    pop_mean = tf.Variable(tf.zeros([inputs.get_shape()[-1]]), trainable=False)
+    pop_var = tf.Variable(tf.ones([inputs.get_shape()[-1]]), trainable=False)
+
+    if is_training:
+        batch_mean, batch_var = tf.nn.moments(inputs,[0])
+        train_mean = tf.assign(pop_mean,
+                               pop_mean * decay + batch_mean * (1 - decay))
+        train_var = tf.assign(pop_var,
+                              pop_var * decay + batch_var * (1 - decay))
+        with tf.control_dependencies([train_mean, train_var]):
+            return tf.nn.batch_normalization(inputs,
+                batch_mean, batch_var, beta, scale, epsilon)
+    else:
+        return tf.nn.batch_normalization(inputs,
+            pop_mean, pop_var, beta, scale, epsilon)
+
 def log_spectrogram(audio, sample_rate, window_size=20,
                  step_size=10, eps=1e-10):
     nperseg = int(round(window_size * sample_rate / 1e3))
@@ -49,9 +69,14 @@ def conv_net(x, weights, biases, dropout, trainable):
 	# Reshape to match picture format [Height x Width x Channel]
 	# Tensor input become 4-D: [Batch Size, Height, Width, Channel]
 	#x = tf.reshape(x, shape=[-1, 98, 161, 1])
+	# x = tf.cond(trainable,
+	# 		lambda: tf.contrib.layers.batch_norm(x, decay=0.9, center=False, scale=True, updates_collections=None, is_training=True),
+	# 		lambda: tf.contrib.layers.batch_norm(x, decay=0.9, center=False, scale=True, updates_collections=None, is_training=False))
+
 	x = tf.cond(trainable,
-			lambda: tf.contrib.layers.batch_norm(x, decay=0.9, center=False, scale=True, updates_collections=None, is_training=True),
-			lambda: tf.contrib.layers.batch_norm(x, decay=0.9, center=False, scale=True, updates_collections=None, is_training=False))
+			lambda: batch_norm_wrapper(x,True,0.9),
+			lambda: batch_norm_wrapper(x,False,0.9))
+
 	x = tf.reshape(x, shape=[-1, 64, 96, 1])
 
 	# Convolution Layer
@@ -83,9 +108,13 @@ def conv_net(x, weights, biases, dropout, trainable):
 	fc1 = tf.add(tf.matmul(fc1, weights['wd1']), biases['bd1'])
 	fc1 = tf.nn.relu(fc1)
 
+	# fc1 = tf.cond(trainable,
+	# 		lambda: tf.contrib.layers.batch_norm(fc1, decay=0.9, center=False, scale=True, updates_collections=None, is_training=True),
+	# 		lambda: tf.contrib.layers.batch_norm(fc1, decay=0.9, center=False, scale=True, updates_collections=None, is_training=False))
+
 	fc1 = tf.cond(trainable,
-			lambda: tf.contrib.layers.batch_norm(fc1, decay=0.9, center=False, scale=True, updates_collections=None, is_training=True),
-			lambda: tf.contrib.layers.batch_norm(fc1, decay=0.9, center=False, scale=True, updates_collections=None, is_training=False))
+			lambda: batch_norm_wrapper(fc1,True,0.9),
+			lambda: batch_norm_wrapper(fc1,False,0.9))
 
 	# Apply Dropout
 	# fc1 = tf.nn.dropout(fc1, dropout)
