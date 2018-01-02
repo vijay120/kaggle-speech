@@ -341,17 +341,12 @@ if __name__ == '__main__':
 				saver.save(sess, '/data/kaggle_model_2/model_final')
 
 				total_acc = 0
-				total_confusion = None
 				for step in range(int(len(examples_val)/batch_size)):
 					batch_x = examples_val[step*batch_size : (step+1)*batch_size]
 					batch_y = labels_val[step*batch_size : (step+1)*batch_size]
 					batch_acc, batch_confusion = sess.run([accuracy, confusion_matrix], feed_dict={X: batch_x, Y: batch_y, keep_prob: 1.0})
+					print(batch_confusion)
 					total_acc += batch_acc/(int(len(examples_val)/batch_size)*1.0)
-
-					if step == 0:
-						total_confusion = batch_confusion
-					else:
-						total_confusion += batch_confusion
 
 				print("Confusion matrix is:\n {}".format(confusion))
 
