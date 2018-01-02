@@ -357,6 +357,9 @@ if __name__ == '__main__':
 					total_arg_max_prediction.append(list(arg_max_prediction_np))
 					total_acc += batch_acc/(int(len(examples_val)/batch_size)*1.0)
 
+				print("total labels: {}".format(total_labels))
+				print("arg max: {}".format(total_arg_max_prediction))
+
 				print("Confusion matrix is:\n {}".format(confusion_matrix(total_labels, total_arg_max_prediction, test_set_ques)))
 
 				print("Validation acc is: {}".format(total_acc))
