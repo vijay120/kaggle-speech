@@ -229,7 +229,10 @@ if __name__ == '__main__':
 
 				counter = 0
 				for file in listdir(predict_file):
-					row = {'fname':file, 'label':classes_[results[counter]]}
+					label = classes_[results[counter]]
+					if label not in test_set_ques:
+						label = "unknown"
+					row = {'fname':file, 'label':label}
 					writer.writerow(row)
 					counter += 1
 
