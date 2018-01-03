@@ -228,7 +228,7 @@ def get_data(dir, ques):
 	indices = np.arange(len(examples))
 	np.random.shuffle(indices)
 
-	train_cutoff = int(0.8 * len(examples))
+	train_cutoff = int(0.99 * len(examples))
 
 	examples_train = examples[indices[:train_cutoff]]
 	labels_train = labels[indices[:train_cutoff]]
@@ -461,8 +461,6 @@ if __name__ == '__main__':
 				print("Confusion matrix is:\n {}".format(confusion_matrix(total_labels, total_arg_max_prediction)))
 
 				print("Validation acc is: {}".format(total_acc))
-
-
 
 			### do some predict time stuff
 			print("Predict time modelling")
