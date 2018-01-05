@@ -11,7 +11,6 @@ import vggish_input
 import csv
 from scipy import signal
 from sklearn.metrics import confusion_matrix
-import librosa
 
 test_set_ques = ["yes", "no", "up", "down", "left", "right", "on", "off", "stop", "go", "silence"]
 extracted_classes = ['down', 'go', 'left', 'no', 'off', 'on', 'right', 'silence', 'stop',
