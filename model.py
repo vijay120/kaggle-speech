@@ -111,7 +111,7 @@ def conv_net(x, weights, biases, dropout, trainable):
 
 	#x = batch_norm_wrapper(x, True, 0.9)
 
-	x = tf.reshape(x, shape=[-1, 64, 96, 1])
+	x = tf.reshape(x, shape=[-1, 256, 32, 1])
 
 	# Convolution Layer
 	conv1 = conv2d(x, weights['wc1'], biases['bc1'])
@@ -297,7 +297,7 @@ if __name__ == '__main__':
 	
 	#num_classes = len(ques)
 	#X = tf.placeholder(tf.float32, [None, 98, 161])
-	X = tf.placeholder(tf.float32, [None, 64, 96])
+	X = tf.placeholder(tf.float32, [None, 256, 32])
 	Y = tf.placeholder(tf.float32, [None, num_classes])
 	train_phase = tf.placeholder(tf.bool)
 	keep_prob = tf.placeholder(tf.float32) # dropout (keep probability)
