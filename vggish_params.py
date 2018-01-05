@@ -19,14 +19,14 @@ See vggish_slim.py for more information.
 """
 
 # Architectural constants.
-NUM_FRAMES = 96  # Frames in input mel-spectrogram patch.
+NUM_FRAMES = 192  # Frames in input mel-spectrogram patch.
 NUM_BANDS = 256  # Frequency bands in input mel-spectrogram patch.
 EMBEDDING_SIZE = 128  # Size of embedding layer.
 
 # Hyperparameters used in feature and example generation.
 SAMPLE_RATE = 16000
-STFT_WINDOW_LENGTH_SECONDS = 0.025
-STFT_HOP_LENGTH_SECONDS = 0.010
+STFT_WINDOW_LENGTH_SECONDS = 0.005
+STFT_HOP_LENGTH_SECONDS = 0.005
 NUM_MEL_BINS = NUM_BANDS
 MEL_MIN_HZ = 125
 MEL_MAX_HZ = 7500
