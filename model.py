@@ -227,7 +227,7 @@ def get_data(dir, ques):
 				#X.append(spectrogram[:98])
 				X.append(spectogram)
 				Y.append(lb.transform([que])[0])
-				break
+		break
 
 	examples = np.asarray(X)
 	labels = np.asarray(Y)
