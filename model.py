@@ -226,6 +226,7 @@ def get_data(dir, ques):
 				
 				spectogram = vggish_input.wavfile_to_examples(file)
 				#X.append(spectrogram[:98])
+				print(spectogram.shape)
 				X.append(spectogram)
 				Y.append(lb.transform([que])[0])
 
