@@ -374,7 +374,7 @@ if __name__ == '__main__':
 			'wc2': tf.Variable(tf.truncated_normal([15, 5, 94, 94], stddev=0.01), name='wc2'),
 			'wc3': tf.Variable(tf.truncated_normal([6, 4, 94, 94], stddev=0.01), name='wc3'),
 			# fully connected, 7*7*64 inputs, 1024 outputs
-			'wd1': tf.Variable(tf.truncated_normal([13*10*94, 128], stddev=0.01), name='wd1'),
+			'wd1': tf.Variable(tf.truncated_normal([25*10*94, 128], stddev=0.01), name='wd1'),
 			# 1024 inputs, 10 outputs (class prediction)
 			'out': tf.Variable(tf.truncated_normal([128, num_classes], stddev=0.01), name='out')
 		}
@@ -396,7 +396,7 @@ if __name__ == '__main__':
 		examples_train, labels_train, examples_val, labels_val = get_data(dir, ques)
 
 		# Training Parameters
-		learning_rate = 0.0001
+		learning_rate = 0.001
 		num_steps = 500
 		display_step = 100
 		epochs = 15
