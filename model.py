@@ -11,6 +11,7 @@ import vggish_input
 import csv
 from scipy import signal
 from sklearn.metrics import confusion_matrix
+import librosa
 
 test_set_ques = ["yes", "no", "up", "down", "left", "right", "on", "off", "stop", "go", "silence"]
 extracted_classes = ['down', 'go', 'left', 'no', 'off', 'on', 'right', 'silence', 'stop',
@@ -207,21 +208,29 @@ def get_data(dir, ques):
 
 			for folder in folders:
 				for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
-					spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
-					X.append(spectogram)
+					y, sr = librosa.load(file, sr=16000)
+					S = librosa.feature.melspectrogram(y, sr=sr, n_mels=256)
+					log_S = librosa.power_to_db(S, ref=np.max)
+
+					#spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
+					X.append(log_S)
 					Y.append(lb.transform([que])[0])
 		else:
 			folder = que_dict[que]
 			for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
-				sample_rate, samples = wavfile.read(file)
+				#sample_rate, samples = wavfile.read(file)
 				#_, _, spectrogram = log_spectrogram(samples, sample_rate)
-				spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
+				y, sr = librosa.load(file, sr=16000)
+				S = librosa.feature.melspectrogram(y, sr=sr, n_mels=256)
+				log_S = librosa.power_to_db(S, ref=np.max)
+				
+				#spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
 				#X.append(spectrogram[:98])
-				X.append(spectogram)
+				X.append(log_S)
 				Y.append(lb.transform([que])[0])
 
-			# if len(X) > 1000:
-			# 	break
+			if len(X) > 1000:
+				break
 
 	examples = np.asarray(X)
 	labels = np.asarray(Y)
@@ -246,9 +255,14 @@ def get_data_predict(folder):
 	for file in [os.path.join(folder, f) for f in listdir(folder)]:
 		sample_rate, samples = wavfile.read(file)
 		#_, _, spectrogram = log_spectrogram(samples, sample_rate)
-		spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
+		#spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
+
+		y, sr = librosa.load(file, sr=16000)
+		S = librosa.feature.melspectrogram(y, sr=sr, n_mels=256)
+		log_S = librosa.power_to_db(S, ref=np.max)
 		#X.append(spectrogram[:98])
-		X.append(spectogram)
+		X.append(log_S)
+
 		counter += 1
 		if counter%1000==0:
 			print(counter)
