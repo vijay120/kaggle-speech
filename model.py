@@ -212,7 +212,6 @@ def get_data(dir, ques):
 					# log_S = librosa.power_to_db(S, ref=np.max)
 
 					spectogram = vggish_input.wavfile_to_examples(file)
-					print(spectogram.shape)
 					X.append(spectogram)
 					Y.append(lb.transform([que])[0])
 		else:
@@ -226,12 +225,8 @@ def get_data(dir, ques):
 				
 				spectogram = vggish_input.wavfile_to_examples(file)
 				#X.append(spectrogram[:98])
-				print(spectogram.shape)
 				X.append(spectogram)
 				Y.append(lb.transform([que])[0])
-
-			if len(X) > 1000:
-				break
 
 	examples = np.asarray(X)
 	labels = np.asarray(Y)
@@ -401,7 +396,7 @@ if __name__ == '__main__':
 		examples_train, labels_train, examples_val, labels_val = get_data(dir, ques)
 
 		# Training Parameters
-		learning_rate = 0.001
+		learning_rate = 0.0001
 		num_steps = 500
 		display_step = 100
 		epochs = 15
