@@ -110,7 +110,7 @@ def conv_net(x, weights, biases, dropout, trainable):
 
 	#x = batch_norm_wrapper(x, True, 0.9)
 
-	x = tf.reshape(x, shape=[-1, 98, 126, 1])
+	x = tf.reshape(x, shape=[-1, 98, 128, 1])
 
 	# Convolution Layer
 	conv1 = conv2d(x, weights['wc1'], biases['bc1'])
