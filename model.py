@@ -101,9 +101,9 @@ def conv_net(x, weights, biases, dropout, trainable):
 	# Reshape to match picture format [Height x Width x Channel]
 	# Tensor input become 4-D: [Batch Size, Height, Width, Channel]
 	#x = tf.reshape(x, shape=[-1, 98, 161, 1])
-	x = tf.cond(trainable,
-			lambda: tf.contrib.layers.batch_norm(x, decay=0.9, center=False, scale=True, updates_collections=None, is_training=True),
-			lambda: tf.contrib.layers.batch_norm(x, decay=0.9, center=False, scale=True, updates_collections=None, is_training=False))
+	# x = tf.cond(trainable,
+	# 		lambda: tf.contrib.layers.batch_norm(x, decay=0.9, center=False, scale=True, updates_collections=None, is_training=True),
+	# 		lambda: tf.contrib.layers.batch_norm(x, decay=0.9, center=False, scale=True, updates_collections=None, is_training=False))
 
 	# x = tf.cond(trainable,
 	# 		lambda: batch_norm_wrapper(x,True,0.9),
@@ -111,7 +111,7 @@ def conv_net(x, weights, biases, dropout, trainable):
 
 	#x = batch_norm_wrapper(x, True, 0.9)
 
-	x = tf.reshape(x, shape=[-1, 256, 32, 1])
+	x = tf.reshape(x, shape=[-1, 98, 126, 1])
 
 	# Convolution Layer
 	conv1 = conv2d(x, weights['wc1'], biases['bc1'])
@@ -142,9 +142,9 @@ def conv_net(x, weights, biases, dropout, trainable):
 	fc1 = tf.add(tf.matmul(fc1, weights['wd1']), biases['bd1'])
 	fc1 = tf.nn.relu(fc1)
 
-	fc1 = tf.cond(trainable,
-			lambda: tf.contrib.layers.batch_norm(fc1, decay=0.9, center=False, scale=True, updates_collections=None, is_training=True),
-			lambda: tf.contrib.layers.batch_norm(fc1, decay=0.9, center=False, scale=True, updates_collections=None, is_training=False))
+	# fc1 = tf.cond(trainable,
+	# 		lambda: tf.contrib.layers.batch_norm(fc1, decay=0.9, center=False, scale=True, updates_collections=None, is_training=True),
+	# 		lambda: tf.contrib.layers.batch_norm(fc1, decay=0.9, center=False, scale=True, updates_collections=None, is_training=False))
 
 	# fc1 = tf.cond(trainable,
 	# 		lambda: batch_norm_wrapper(fc1,True,0.9),
@@ -208,25 +208,25 @@ def get_data(dir, ques):
 
 			for folder in folders:
 				for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
-					y, sr = librosa.load(file, sr=16000)
-					S = librosa.feature.melspectrogram(y, sr=sr, n_mels=256)
-					log_S = librosa.power_to_db(S, ref=np.max)
+					# y, sr = librosa.load(file, sr=16000)
+					# S = librosa.feature.melspectrogram(y, sr=sr, n_mels=256)
+					# log_S = librosa.power_to_db(S, ref=np.max)
 
-					#spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
-					X.append(log_S)
+					spectogram = vggish_input.wavfile_to_examples(file)
+					X.append(spectogram)
 					Y.append(lb.transform([que])[0])
 		else:
 			folder = que_dict[que]
 			for file in [os.path.join(folder, f) for f in listdir(folder) if isfile(join(folder, f))]:
 				#sample_rate, samples = wavfile.read(file)
 				#_, _, spectrogram = log_spectrogram(samples, sample_rate)
-				y, sr = librosa.load(file, sr=16000)
-				S = librosa.feature.melspectrogram(y, sr=sr, n_mels=256)
-				log_S = librosa.power_to_db(S, ref=np.max)
+				# y, sr = librosa.load(file, sr=16000)
+				# S = librosa.feature.melspectrogram(y, sr=sr, n_mels=256)
+				# log_S = librosa.power_to_db(S, ref=np.max)
 				
-				#spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
+				spectogram = vggish_input.wavfile_to_examples(file)
 				#X.append(spectrogram[:98])
-				X.append(log_S)
+				X.append(spectogram)
 				Y.append(lb.transform([que])[0])
 
 			if len(X) > 1000:
@@ -257,11 +257,12 @@ def get_data_predict(folder):
 		#_, _, spectrogram = log_spectrogram(samples, sample_rate)
 		#spectogram = np.transpose(vggish_input.wavfile_to_examples(file)[0,:,])
 
-		y, sr = librosa.load(file, sr=16000)
-		S = librosa.feature.melspectrogram(y, sr=sr, n_mels=256)
-		log_S = librosa.power_to_db(S, ref=np.max)
+		# y, sr = librosa.load(file, sr=16000)
+		# S = librosa.feature.melspectrogram(y, sr=sr, n_mels=256)
+		# log_S = librosa.power_to_db(S, ref=np.max)
 		#X.append(spectrogram[:98])
-		X.append(log_S)
+		spectogram = vggish_input.wavfile_to_examples(file)
+		X.append(spectogram)
 
 		counter += 1
 		if counter%1000==0:
@@ -297,7 +298,7 @@ if __name__ == '__main__':
 	
 	#num_classes = len(ques)
 	#X = tf.placeholder(tf.float32, [None, 98, 161])
-	X = tf.placeholder(tf.float32, [None, 256, 32])
+	X = tf.placeholder(tf.float32, [None, 98, 128])
 	Y = tf.placeholder(tf.float32, [None, num_classes])
 	train_phase = tf.placeholder(tf.bool)
 	keep_prob = tf.placeholder(tf.float32) # dropout (keep probability)
