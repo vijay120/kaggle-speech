@@ -212,6 +212,7 @@ def get_data(dir, ques):
 					# log_S = librosa.power_to_db(S, ref=np.max)
 
 					spectogram = vggish_input.wavfile_to_examples(file)
+					print(spectogram.shape)
 					X.append(spectogram)
 					Y.append(lb.transform([que])[0])
 		else:
