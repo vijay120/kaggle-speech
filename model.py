@@ -110,7 +110,7 @@ def conv_net(x, weights, biases, dropout, trainable):
 
 	#x = batch_norm_wrapper(x, True, 0.9)
 
-	x = tf.reshape(x, shape=[-1, 200, 256, 1])
+	x = tf.reshape(x, shape=[-1, 199, 256, 1])
 
 	# Convolution Layer
 	conv1 = conv2d(x, weights['wc1'], biases['bc1'])
@@ -213,7 +213,7 @@ def get_data(dir, ques):
 
 					spectogram = vggish_input.wavfile_to_examples(file)
 					print(spectogram.shape)
-					X.append(spectogram)
+					X.append(spectogram[:199])
 					Y.append(lb.transform([que])[0])
 		else:
 			folder = que_dict[que]
@@ -227,7 +227,7 @@ def get_data(dir, ques):
 				spectogram = vggish_input.wavfile_to_examples(file)
 				print(spectogram.shape)
 				#X.append(spectrogram[:98])
-				X.append(spectogram)
+				X.append(spectogram[:199])
 				Y.append(lb.transform([que])[0])
 
 		if len(X) > 1000:
@@ -265,7 +265,7 @@ def get_data_predict(folder):
 		# log_S = librosa.power_to_db(S, ref=np.max)
 		#X.append(spectrogram[:98])
 		spectogram = vggish_input.wavfile_to_examples(file)
-		X.append(spectogram)
+		X.append(spectogram[:199])
 
 		counter += 1
 		if counter%1000==0:
@@ -301,7 +301,7 @@ if __name__ == '__main__':
 	
 	#num_classes = len(ques)
 	#X = tf.placeholder(tf.float32, [None, 98, 161])
-	X = tf.placeholder(tf.float32, [None, 200, 256])
+	X = tf.placeholder(tf.float32, [None, 199, 256])
 	Y = tf.placeholder(tf.float32, [None, num_classes])
 	train_phase = tf.placeholder(tf.bool)
 	keep_prob = tf.placeholder(tf.float32) # dropout (keep probability)
