@@ -212,7 +212,6 @@ def get_data(dir, ques):
 					# log_S = librosa.power_to_db(S, ref=np.max)
 
 					spectogram = vggish_input.wavfile_to_examples(file)
-					print(spectogram.shape)
 					X.append(spectogram[:199])
 					Y.append(lb.transform([que])[0])
 		else:
@@ -225,13 +224,12 @@ def get_data(dir, ques):
 				# log_S = librosa.power_to_db(S, ref=np.max)
 				
 				spectogram = vggish_input.wavfile_to_examples(file)
-				print(spectogram.shape)
 				#X.append(spectrogram[:98])
 				X.append(spectogram[:199])
 				Y.append(lb.transform([que])[0])
 
-		if len(X) > 1000:
-			break
+		# if len(X) > 1000:
+		# 	break
 
 	examples = np.asarray(X)
 	labels = np.asarray(Y)
@@ -245,8 +243,6 @@ def get_data(dir, ques):
 
 	examples_val = examples[indices[train_cutoff:]]
 	labels_val = labels[indices[train_cutoff:]]
-
-	import pdb; pdb.set_trace()
 
 	return examples_train, labels_train, examples_val, labels_val
 
