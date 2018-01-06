@@ -228,6 +228,9 @@ def get_data(dir, ques):
 				X.append(spectogram)
 				Y.append(lb.transform([que])[0])
 
+		if len(X) > 1000:
+			break
+
 	examples = np.asarray(X)
 	labels = np.asarray(Y)
 	indices = np.arange(len(examples))
