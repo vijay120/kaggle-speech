@@ -244,6 +244,8 @@ def get_data(dir, ques):
 	examples_val = examples[indices[train_cutoff:]]
 	labels_val = labels[indices[train_cutoff:]]
 
+	import pdb; pdb.set_trace()
+
 	return examples_train, labels_train, examples_val, labels_val
 
 
